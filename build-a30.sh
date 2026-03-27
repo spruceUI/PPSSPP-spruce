@@ -4,7 +4,7 @@ set -e
 PPSSPP_VERSION="${PPSSPP_VERSION:-v1.20.3}"
 OUTPUT_DIR="${OUTPUT_DIR:-/output}"
 
-echo "=== Building PPSSPP ${PPSSPP_VERSION} for TSPS (A523 / Mali G57) ==="
+echo "=== Building PPSSPP ${PPSSPP_VERSION} for A30 (armhf / Mali fbdev) ==="
 
 # Clone PPSSPP with submodules
 if [ ! -d "ppsspp" ]; then
@@ -21,8 +21,8 @@ for patch in /patches/common/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
-# Apply TSPS-specific patches
-for patch in /patches/tsps/*.py; do
+# Apply A30-specific patches
+for patch in /patches/a30/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
@@ -30,16 +30,17 @@ mkdir -p build && cd build
 
 # Cross-compilation environment
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
-export PATH="/opt/tsps-sdk/opt/ext-toolchain/bin:${PATH}"
+export PATH="/opt/a30/bin:${PATH}"
 
-# Configure for TSPS: SDL2 + GLES2, fbdev, Mali G57
+# Configure for A30: SDL2 + GLES2, Mali fbdev, NEON
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_TOOLCHAIN_FILE=/tmp/tsps-toolchain.cmake \
+    -DCMAKE_TOOLCHAIN_FILE=/tmp/a30-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-Wno-error" \
-    -DCMAKE_CXX_FLAGS="-Wno-error" \
+    -DCMAKE_C_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error" \
+    -DCMAKE_CXX_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
@@ -54,7 +55,10 @@ cmake .. \
     -DHEADLESS=OFF \
     -DUNITTEST=OFF \
     -DCMAKE_DISABLE_FIND_PACKAGE_SDL2_ttf=ON \
-    -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=ON
+    -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=ON \
+    -DARM=ON \
+    -DARMV7=ON \
+    -DUSING_ARM_NEON=ON
 
 # Fix cross-compile: -isystem paths get sysroot-prepended by GCC, breaking includes
 find . \( -name 'flags.make' -o -name 'build.ninja' \) -exec sed -i 's|-isystem |-I|g' {} +
@@ -64,10 +68,10 @@ make -j$(nproc) PPSSPPSDL
 
 # Output
 mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_SmartProS"
-/opt/tsps-sdk/opt/ext-toolchain/bin/aarch64-none-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL_SmartProS"
+cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_A30"
+/opt/a30/bin/arm-a30-linux-gnueabihf-strip "$OUTPUT_DIR/PPSSPPSDL_A30"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
 
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_SmartProS ==="
+echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_A30 ==="
