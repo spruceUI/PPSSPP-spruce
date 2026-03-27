@@ -1,0 +1,51 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Basic build dependencies (vendor toolchain provides cross-compiler + sysroot)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake git python3 ccache ca-certificates pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and extract SmartPro SDK tarballs
+# Linaro GCC 7.5 cross-compiler (aarch64-linux-gnu triplet)
+COPY toolchains/smartpro/aarch64-linux-gnu-7.5.0-linaro.tgz /tmp/
+RUN tar xzf /tmp/aarch64-linux-gnu-7.5.0-linaro.tgz -C /opt/ && \
+    rm /tmp/aarch64-linux-gnu-7.5.0-linaro.tgz
+
+# SmartPro device SDK — PowerVR GE8300 GPU libs, SDL2 2.26.1, glibc 2.23
+# Extracts as usr/ (no wrapper dir)
+COPY toolchains/smartpro/SDK_usr_tg5040_a133p.tgz /tmp/
+RUN mkdir -p /opt/smartpro-sdk && \
+    tar xzf /tmp/SDK_usr_tg5040_a133p.tgz -C /opt/smartpro-sdk/ && \
+    rm /tmp/SDK_usr_tg5040_a133p.tgz
+
+# Create merged sysroot: compiler's libc base + SDK overlay
+# Compiler sysroot has /lib (ld-linux, crt files). SDK has /usr (PowerVR, SDL2, device libs).
+RUN cp -a /opt/aarch64-linux-gnu-7.5.0-linaro/aarch64-linux-gnu/libc /opt/sysroot && \
+    cp -a /opt/smartpro-sdk/usr/include/* /opt/sysroot/usr/include/ && \
+    cp -a /opt/smartpro-sdk/usr/lib/* /opt/sysroot/usr/lib/
+
+# Create CMake toolchain file
+RUN printf '\
+set(CMAKE_SYSTEM_NAME Linux)\n\
+set(CMAKE_SYSTEM_PROCESSOR aarch64)\n\
+set(CMAKE_C_COMPILER /opt/aarch64-linux-gnu-7.5.0-linaro/bin/aarch64-linux-gnu-gcc)\n\
+set(CMAKE_CXX_COMPILER /opt/aarch64-linux-gnu-7.5.0-linaro/bin/aarch64-linux-gnu-g++)\n\
+set(CMAKE_SYSROOT /opt/sysroot)\n\
+set(CMAKE_FIND_ROOT_PATH /opt/sysroot)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)\n\
+set(PKG_CONFIG_EXECUTABLE /usr/bin/pkg-config)\n\
+set(ENV{PKG_CONFIG_SYSROOT_DIR} "/opt/sysroot")\n\
+set(ENV{PKG_CONFIG_LIBDIR} "/opt/sysroot/usr/lib/pkgconfig")\n\
+' > /tmp/pvr-toolchain.cmake
+
+COPY build-pvr.sh /build-pvr.sh
+RUN chmod +x /build-pvr.sh
+COPY patches/ /patches/
+
+WORKDIR /build
+ENTRYPOINT ["/build-pvr.sh"]

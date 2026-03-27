@@ -4,7 +4,7 @@ set -e
 PPSSPP_VERSION="${PPSSPP_VERSION:-v1.20.3}"
 OUTPUT_DIR="${OUTPUT_DIR:-/output}"
 
-echo "=== Building PPSSPP ${PPSSPP_VERSION} for aarch64 (universal 64-bit) ==="
+echo "=== Building PPSSPP ${PPSSPP_VERSION} for Miyoo Flip (RK3566 / Mali G52) ==="
 
 # Clone PPSSPP with submodules
 if [ ! -d "ppsspp" ]; then
@@ -21,8 +21,8 @@ for patch in /patches/common/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
-# Apply 64-bit-specific patches
-for patch in /patches/64/*.py; do
+# Apply flip-specific patches
+for patch in /patches/flip/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
@@ -30,11 +30,12 @@ mkdir -p build && cd build
 
 # Cross-compilation environment
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
+export PATH="/opt/flip/bin:/opt/flip/aarch64-flip-linux-gnu/bin:${PATH}"
 
-# Configure for universal 64-bit: SDL2 + OpenGL ES2, no X11/Wayland
+# Configure for Flip: SDL2 + GLES2, fbdev, no X11/Wayland/Vulkan
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_TOOLCHAIN_FILE=/tmp/aarch64-toolchain.cmake \
+    -DCMAKE_TOOLCHAIN_FILE=/tmp/flip-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Wno-error" \
@@ -53,15 +54,18 @@ cmake .. \
     -DHEADLESS=OFF \
     -DUNITTEST=OFF
 
+# Fix cross-compile: -isystem paths get sysroot-prepended by GCC, breaking includes
+find . \( -name 'flags.make' -o -name 'build.ninja' \) -exec sed -i 's|-isystem |-I|g' {} +
+
 # Build
 make -j$(nproc) PPSSPPSDL
 
 # Output
 mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/"
-aarch64-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL"
+cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_Flip"
+/opt/flip/aarch64-flip-linux-gnu/bin/strip "$OUTPUT_DIR/PPSSPPSDL_Flip"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
 
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL ==="
+echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_Flip ==="

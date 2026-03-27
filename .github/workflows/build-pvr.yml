@@ -1,0 +1,97 @@
+name: Build PPSSPPSDL_TrimUI
+
+on:
+  workflow_dispatch:
+    inputs:
+      ppsspp_version:
+        description: 'PPSSPP version tag'
+        default: 'v1.20.3'
+  workflow_call:
+    inputs:
+      ppsspp_version:
+        type: string
+        default: 'v1.20.3'
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/spruceui/ppsspp-builder-pvr
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure latest release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="latest"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --target "${{ github.ref_name }}" \
+              --title "Latest Build" \
+              --notes "PPSSPP ${{ github.event.inputs.ppsspp_version || 'v1.20.3' }} binaries for SpruceOS" \
+            || true
+
+      # SmartPro SDK tarballs are not in the repo (vendor SDK, gitignored).
+      # The Docker image is built once with COPY'd tarballs, then cached in GHCR.
+      # First build: run locally with toolchains/ present, push image manually.
+      # Subsequent CI runs: pull cached image, skip rebuild.
+      - name: Download SDK tarballs from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p toolchains/smartpro
+          gh release download sdk-toolchains \
+            -p "aarch64-linux-gnu-7.5.0-linaro.tgz" \
+            -p "SDK_usr_tg5040_a133p.tgz" \
+            -D toolchains/smartpro/ 2>/dev/null || \
+          echo "::warning::SDK tarballs not found in sdk-toolchains release. Using cached Docker image."
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.pvr
+          push: true
+          tags: ${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.IMAGE }}:cache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:cache,mode=max
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ccache
+          key: ccache-pvr-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-${{ github.sha }}
+          restore-keys: |
+            ccache-pvr-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-
+            ccache-pvr-
+
+      - name: Build PPSSPP
+        run: |
+          mkdir -p output ccache
+          docker run --rm \
+            -e PPSSPP_VERSION=${{ github.event.inputs.ppsspp_version || 'v1.20.3' }} \
+            -v ${{ github.workspace }}/output:/output \
+            -v ${{ github.workspace }}/ccache:/ccache \
+            ${{ env.IMAGE }}:latest
+
+      - name: Upload binary and assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "latest" output/PPSSPPSDL_TrimUI --clobber

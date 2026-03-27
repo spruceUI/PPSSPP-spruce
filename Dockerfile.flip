@@ -1,0 +1,47 @@
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Basic build dependencies (toolchain provides its own cross-compiler + sysroot)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates git bash build-essential \
+    pkg-config python3 cmake ccache wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Steward-Fu Flip toolchain
+# Triplet: aarch64-flip-linux-gnu, GCC 13.3, glibc 2.38
+# Sysroot includes SDL2 2.30.5, Mesa EGL/GLES2, DRM/GBM, ALSA
+RUN wget -q https://github.com/steward-fu/website/releases/download/miyoo-flip/flip-toolchain-v1.0.tar.gz \
+    -O /tmp/flip-toolchain.tar.gz && \
+    mkdir -p /opt/flip && \
+    tar xzf /tmp/flip-toolchain.tar.gz -C /opt/flip --strip-components=1 && \
+    rm /tmp/flip-toolchain.tar.gz
+
+# Verify toolchain extracted correctly
+RUN test -x /opt/flip/bin/aarch64-flip-linux-gnu-gcc || \
+    (echo "ERROR: Flip toolchain not found at expected path" && exit 1)
+
+# Create CMake toolchain file
+RUN SYSROOT=$(/opt/flip/bin/aarch64-flip-linux-gnu-gcc -print-sysroot) && \
+    printf '\
+set(CMAKE_SYSTEM_NAME Linux)\n\
+set(CMAKE_SYSTEM_PROCESSOR aarch64)\n\
+set(CMAKE_C_COMPILER /opt/flip/bin/aarch64-flip-linux-gnu-gcc)\n\
+set(CMAKE_CXX_COMPILER /opt/flip/bin/aarch64-flip-linux-gnu-g++)\n\
+set(CMAKE_SYSROOT %s)\n\
+set(CMAKE_FIND_ROOT_PATH %s)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)\n\
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)\n\
+set(PKG_CONFIG_EXECUTABLE /usr/bin/pkg-config)\n\
+set(ENV{PKG_CONFIG_SYSROOT_DIR} "%s")\n\
+set(ENV{PKG_CONFIG_LIBDIR} "%s/usr/lib/pkgconfig:%s/usr/share/pkgconfig")\n\
+' "$SYSROOT" "$SYSROOT" "$SYSROOT" "$SYSROOT" "$SYSROOT" > /tmp/flip-toolchain.cmake
+
+COPY build-flip.sh /build-flip.sh
+RUN chmod +x /build-flip.sh
+COPY patches/ /patches/
+
+WORKDIR /build
+ENTRYPOINT ["/build-flip.sh"]

@@ -1,0 +1,82 @@
+name: Build PPSSPPSDL_Flip
+
+on:
+  workflow_dispatch:
+    inputs:
+      ppsspp_version:
+        description: 'PPSSPP version tag'
+        default: 'v1.20.3'
+  workflow_call:
+    inputs:
+      ppsspp_version:
+        type: string
+        default: 'v1.20.3'
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/spruceui/ppsspp-builder-flip
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure latest release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="latest"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --target "${{ github.ref_name }}" \
+              --title "Latest Build" \
+              --notes "PPSSPP ${{ github.event.inputs.ppsspp_version || 'v1.20.3' }} binaries for SpruceOS" \
+            || true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.flip
+          push: true
+          tags: ${{ env.IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.IMAGE }}:cache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:cache,mode=max
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ccache
+          key: ccache-flip-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-${{ github.sha }}
+          restore-keys: |
+            ccache-flip-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-
+            ccache-flip-
+
+      - name: Build PPSSPP
+        run: |
+          mkdir -p output ccache
+          docker run --rm \
+            -e PPSSPP_VERSION=${{ github.event.inputs.ppsspp_version || 'v1.20.3' }} \
+            -v ${{ github.workspace }}/output:/output \
+            -v ${{ github.workspace }}/ccache:/ccache \
+            ${{ env.IMAGE }}:latest
+
+      - name: Upload binary and assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "latest" output/PPSSPPSDL_Flip --clobber
