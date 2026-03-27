@@ -48,6 +48,7 @@ int fcntl64(int fd, int cmd, ...) {
 EOFC
 arm-a30-linux-gnueabihf-gcc -c /tmp/fcntl64_compat.c -o /tmp/fcntl64_compat.o \
     -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard
+arm-a30-linux-gnueabihf-ar rcs /tmp/libfcntl64_compat.a /tmp/fcntl64_compat.o
 
 # Configure for A30: SDL2 + GLES2, Mali fbdev, NEON
 cmake .. \
@@ -57,7 +58,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error -DHWCAP2_AES=1 -DHWCAP2_SHA1=4 -DHWCAP2_SHA2=8 -DHWCAP2_CRC32=16" \
     -DCMAKE_CXX_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ /tmp/fcntl64_compat.o" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -L/tmp -Wl,--whole-archive -lfcntl64_compat -Wl,--no-whole-archive" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
