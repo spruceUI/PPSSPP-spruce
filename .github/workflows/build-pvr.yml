@@ -37,10 +37,6 @@ jobs:
               --notes "PPSSPP ${{ github.event.inputs.ppsspp_version || 'v1.20.3' }} binaries for SpruceOS" \
             || true
 
-      # SmartPro SDK tarballs are not in the repo (vendor SDK, gitignored).
-      # The Docker image is built once with COPY'd tarballs, then cached in GHCR.
-      # First build: run locally with toolchains/ present, push image manually.
-      # Subsequent CI runs: pull cached image, skip rebuild.
       - name: Download SDK tarballs from release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -49,8 +45,7 @@ jobs:
           gh release download sdk-toolchains \
             -p "aarch64-linux-gnu-7.5.0-linaro.tgz" \
             -p "SDK_usr_tg5040_a133p.tgz" \
-            -D toolchains/smartpro/ 2>/dev/null || \
-          echo "::warning::SDK tarballs not found in sdk-toolchains release. Using cached Docker image."
+            -D toolchains/smartpro/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
