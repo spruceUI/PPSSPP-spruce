@@ -30,7 +30,7 @@ mkdir -p build && cd build
 
 # Cross-compilation environment
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
-export PATH="/opt/aarch64-linux-gnu-7.5.0-linaro/bin:${PATH}"
+export PATH="/usr/bin:${PATH}"
 
 # Configure for PowerVR: SDL2 + GLES2 via fbdev, EGL OFF (SDL handles GL context)
 cmake .. \
@@ -40,6 +40,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Wno-error" \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
@@ -65,7 +66,7 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
-/opt/aarch64-linux-gnu-7.5.0-linaro/bin/aarch64-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
+aarch64-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
