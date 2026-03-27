@@ -14,6 +14,18 @@ if [ ! -d "ppsspp" ]; then
 fi
 
 cd ppsspp
+
+# Apply common patches
+echo "=== Applying patches ==="
+for patch in /patches/common/*.py; do
+    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+done
+
+# Apply 64-bit-specific patches
+for patch in /patches/64/*.py; do
+    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+done
+
 mkdir -p build && cd build
 
 # Cross-compilation environment
