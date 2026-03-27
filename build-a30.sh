@@ -38,7 +38,7 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/a30-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error" \
+    -DCMAKE_C_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error -DHWCAP2_AES=1 -DHWCAP2_SHA1=4 -DHWCAP2_SHA2=8 -DHWCAP2_CRC32=16" \
     -DCMAKE_CXX_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error" \
     -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
