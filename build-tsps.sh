@@ -40,6 +40,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Wno-error" \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
+    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--copy-dt-needed-entries" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
