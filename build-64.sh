@@ -51,7 +51,9 @@ cmake .. \
     -DUSE_DISCORD=OFF \
     -DUSE_MINIUPNPC=OFF \
     -DHEADLESS=OFF \
-    -DUNITTEST=OFF
+    -DUNITTEST=OFF \
+    -DCMAKE_DISABLE_FIND_PACKAGE_SDL2_ttf=ON \
+    -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=ON
 
 # Build
 make -j$(nproc) PPSSPPSDL
