@@ -54,7 +54,8 @@ cmake .. \
     -DHEADLESS=OFF \
     -DUNITTEST=OFF \
     -DCMAKE_DISABLE_FIND_PACKAGE_SDL2_ttf=ON \
-    -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=ON
+    -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=ON \
+    -DCMAKE_DISABLE_FIND_PACKAGE_X11=ON
 
 # Fix cross-compile: -isystem paths get sysroot-prepended by GCC, breaking includes
 find . \( -name 'flags.make' -o -name 'build.ninja' \) -exec sed -i 's|-isystem |-I|g' {} +
