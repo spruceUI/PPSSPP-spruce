@@ -31,6 +31,23 @@ mkdir -p build && cd build
 # Cross-compilation environment
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/opt/a30/bin:${PATH}"
+SYSROOT=/opt/a30/arm-a30-linux-gnueabihf/sysroot
+
+# Build fcntl64 compat shim — pre-built ffmpeg needs fcntl64 (glibc 2.28+)
+# but A30 sysroot has glibc 2.23
+cat > /tmp/fcntl64_compat.c << 'EOFC'
+#include <stdarg.h>
+#include <fcntl.h>
+int fcntl64(int fd, int cmd, ...) {
+    va_list ap;
+    va_start(ap, cmd);
+    void *arg = va_arg(ap, void *);
+    va_end(ap);
+    return fcntl(fd, cmd, arg);
+}
+EOFC
+arm-a30-linux-gnueabihf-gcc -c /tmp/fcntl64_compat.c -o /tmp/fcntl64_compat.o \
+    -march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard
 
 # Configure for A30: SDL2 + GLES2, Mali fbdev, NEON
 cmake .. \
@@ -40,7 +57,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error -DHWCAP2_AES=1 -DHWCAP2_SHA1=4 -DHWCAP2_SHA2=8 -DHWCAP2_CRC32=16" \
     -DCMAKE_CXX_FLAGS="-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard -Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ /tmp/fcntl64_compat.o" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
