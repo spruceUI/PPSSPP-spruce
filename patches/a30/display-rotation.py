@@ -40,20 +40,20 @@ def patch_sdlmain(filepath):
         '\t\tg_display.rot_matrix.setIdentity();\n'
         '\t\t// DISPLAY_ROTATION is how far the panel is rotated from normal;\n'
         '\t\t// we apply the inverse rotation to compensate.\n'
-        '\t\t// NOTE: Only set g_display.rotation (for viewport/scissor rotation in\n'
-        '\t\t// GLQueueRunner). Do NOT set rot_matrix — ComputeOrthoMatrix applies it\n'
-        '\t\t// to the UI projection, causing double rotation with the viewport transform.\n'
-        '\t\t// The viewport rotation alone handles both game and UI correctly on GL.\n'
+        '\t\t// We apply the inverse rotation to compensate for panel orientation.\n'
         '\t\tswitch (rot_deg) {\n'
         '\t\tcase 90:\n'
         '\t\t\tg_display.rotation = DisplayRotation::ROTATE_270;\n'
+        '\t\t\tg_display.rot_matrix.setRotationZ270();\n'
         '\t\t\tstd::swap(g_DesktopWidth, g_DesktopHeight);\n'
         '\t\t\tbreak;\n'
         '\t\tcase 180:\n'
         '\t\t\tg_display.rotation = DisplayRotation::ROTATE_180;\n'
+        '\t\t\tg_display.rot_matrix.setRotationZ180();\n'
         '\t\t\tbreak;\n'
         '\t\tcase 270:\n'
         '\t\t\tg_display.rotation = DisplayRotation::ROTATE_90;\n'
+        '\t\t\tg_display.rot_matrix.setRotationZ90();\n'
         '\t\t\tstd::swap(g_DesktopWidth, g_DesktopHeight);\n'
         '\t\t\tbreak;\n'
         '\t\t}\n'
@@ -285,6 +285,45 @@ def patch_glqueuerunner(filepath):
     print(f"Patched {filepath}: {changes} modifications")
 
 
+def patch_display(filepath):
+    with open(filepath, 'r') as f:
+        content = f.read()
+
+    # Fix ortho * rot_matrix multiplication order for OpenGL.
+    # Vulkan's ortho has y increasing downward (same as screen coords),
+    # so ortho * rot works correctly. GL's ortho has y flipped, so
+    # ortho * rot applies rotation in the wrong space (dp instead of NDC).
+    # Using rot * ortho applies ortho first (dp→NDC), then rotates in NDC.
+    old = (
+        '\t// Compensate for rotated display if needed.\n'
+        '\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
+        '\t\tortho = ortho * g_display.rot_matrix;\n'
+        '\t}'
+    )
+    new = (
+        '\t// Compensate for rotated display if needed.\n'
+        '\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
+        '\t\tif (coordConvention == CoordConvention::OpenGL) {\n'
+        '\t\t\t// GL ortho has Y flipped vs Vulkan, so we must apply rotation\n'
+        '\t\t\t// after projection (in NDC space), not before.\n'
+        '\t\t\tortho = g_display.rot_matrix * ortho;\n'
+        '\t\t} else {\n'
+        '\t\t\tortho = ortho * g_display.rot_matrix;\n'
+        '\t\t}\n'
+        '\t}'
+    )
+    if old not in content:
+        print(f"ERROR: Could not find rotation block in {filepath}")
+        sys.exit(1)
+    content = content.replace(old, new, 1)
+
+    with open(filepath, 'w') as f:
+        f.write(content)
+
+    print(f"Patched {filepath}: fixed ortho*rot order for GL")
+
+
 if __name__ == '__main__':
     patch_sdlmain('SDL/SDLMain.cpp')
     patch_glqueuerunner('Common/GPU/OpenGL/GLQueueRunner.cpp')
+    patch_display('Common/System/Display.cpp')
