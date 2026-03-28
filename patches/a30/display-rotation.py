@@ -5,26 +5,23 @@ Reads the DISPLAY_ROTATION environment variable (0, 90, 180, 270) and
 activates PPSSPP's existing DisplayRotation infrastructure for SDL/OpenGL.
 PPSSPP already has rotation support (rot_matrix, ComputeOrthoMatrix,
 CopyToOutput vertex rotation) but it's only wired up for Vulkan/UWP.
-This patch wires it up for SDL.
+This patch wires it up for SDL/OpenGL.
 
-Modifications to SDL/SDLMain.cpp:
-1. After display mode detection: read DISPLAY_ROTATION, set g_display.rotation
-   and rot_matrix, swap g_DesktopWidth/Height for 90/270 rotations
-2. In window resize handler: swap dimensions when rotation is active
-3. Mouse coordinates: transform from physical to logical space
-4. Touch coordinates: transform from physical to logical space
+Files modified:
+  SDL/SDLMain.cpp — rotation detection, dimension swap, input transform
+  Common/GPU/OpenGL/GLQueueRunner.cpp — viewport/scissor rotation for backbuffer
+    (mirrors what VulkanQueueRunner already does with RotateRectToDisplay)
 """
 import sys
 
 
-def patch(filepath):
+def patch_sdlmain(filepath):
     with open(filepath, 'r') as f:
         content = f.read()
 
     changes = 0
 
     # ── Mod 1: Add rotation detection after display mode detection ──
-    # Insert after g_DesktopHeight = displayMode.h; / g_RefreshRate = ...;
     old = (
         'g_DesktopWidth = displayMode.w;\n'
         '\tg_DesktopHeight = displayMode.h;\n'
@@ -69,7 +66,6 @@ def patch(filepath):
     changes += 1
 
     # ── Mod 2: Swap dimensions in window resize handler ──
-    # After new_width_px/new_height_px are computed, swap if rotated
     old = (
         'int new_width_px = new_width * g_DesktopDPI;\n'
         '\t\t\tint new_height_px = new_height * g_DesktopDPI;'
@@ -89,9 +85,6 @@ def patch(filepath):
 
     # ── Mod 3: Transform mouse coordinates ──
     # After swap: g_DesktopWidth = logicalW = physH, g_DesktopHeight = logicalH = physW
-    # ROTATE_90:  logical(x,y) = (phys_y, physW - phys_x)
-    # ROTATE_270: logical(x,y) = (physH - phys_y, phys_x)
-    # ROTATE_180: logical(x,y) = (physW - phys_x, physH - phys_y)
     old = (
         'float mx = event.motion.x * g_DesktopDPI * g_display.dpi_scale_x;\n'
         '\tfloat my = event.motion.y * g_DesktopDPI * g_display.dpi_scale_x;'
@@ -118,11 +111,7 @@ def patch(filepath):
     content = content.replace(old, new, 1)
     changes += 1
 
-    # ── Mod 4: Transform touch coordinates ──
-    # Touch events compute input.x/y from tfinger.x/y * window size.
-    # SDL reports physical window dimensions, so we transform after.
-    # There are 3 identical patterns (FINGERMOTION, FINGERDOWN, FINGERUP).
-    # Same transform as mouse: after swap, g_DesktopWidth=physH, g_DesktopHeight=physW
+    # ── Mod 4: Transform touch coordinates (3 identical sites) ──
     old_touch = (
         'input.x = event.tfinger.x * w * g_DesktopDPI * g_display.dpi_scale_x;\n'
         '\t\t\tinput.y = event.tfinger.y * h * g_DesktopDPI * g_display.dpi_scale_x;'
@@ -153,8 +142,146 @@ def patch(filepath):
     with open(filepath, 'w') as f:
         f.write(content)
 
-    print(f"Patched display rotation support ({changes} modifications)")
+    print(f"Patched {filepath}: {changes} modifications")
+
+
+def patch_glqueuerunner(filepath):
+    with open(filepath, 'r') as f:
+        content = f.read()
+
+    changes = 0
+
+    # ── Add Display.h include ──
+    old = '#include "Common/Math/math_util.h"'
+    new = '#include "Common/Math/math_util.h"\n#include "Common/System/Display.h"'
+    if old not in content:
+        print(f"ERROR: Could not find math_util include in {filepath}")
+        sys.exit(1)
+    content = content.replace(old, new, 1)
+    changes += 1
+
+    # ── Viewport: use RotateRectToDisplay for backbuffer (mirrors VulkanQueueRunner) ──
+    old = (
+        'case GLRRenderCommand::VIEWPORT:\n'
+        '\t\t{\n'
+        '\t\t\tfloat y = c.viewport.vp.y;\n'
+        '\t\t\tif (!curFB_)\n'
+        '\t\t\t\ty = curFBHeight_ - y - c.viewport.vp.h;\n'
+        '\n'
+        '\t\t\t// TODO: Support FP viewports through glViewportArrays\n'
+        '\t\t\tif (viewport.x != c.viewport.vp.x || viewport.y != y || viewport.w != c.viewport.vp.w || viewport.h != c.viewport.vp.h) {\n'
+        '\t\t\t\tglViewport((GLint)c.viewport.vp.x, (GLint)y, (GLsizei)c.viewport.vp.w, (GLsizei)c.viewport.vp.h);'
+    )
+    new = (
+        'case GLRRenderCommand::VIEWPORT:\n'
+        '\t\t{\n'
+        '\t\t\tfloat vp_x = c.viewport.vp.x;\n'
+        '\t\t\tfloat vp_y = c.viewport.vp.y;\n'
+        '\t\t\tfloat vp_w = c.viewport.vp.w;\n'
+        '\t\t\tfloat vp_h = c.viewport.vp.h;\n'
+        '\t\t\tif (!curFB_) {\n'
+        '\t\t\t\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
+        '\t\t\t\t\t// Rotate viewport from logical to physical coords, like VulkanQueueRunner does\n'
+        '\t\t\t\t\tfloat physW = curFBWidth_, physH = curFBHeight_;\n'
+        '\t\t\t\t\tif (g_display.rotation == DisplayRotation::ROTATE_90 || g_display.rotation == DisplayRotation::ROTATE_270)\n'
+        '\t\t\t\t\t\tstd::swap(physW, physH);\n'
+        '\t\t\t\t\tDisplayRect<float> rc{ vp_x, vp_y, vp_w, vp_h };\n'
+        '\t\t\t\t\tRotateRectToDisplay(rc, physW, physH);\n'
+        '\t\t\t\t\tvp_x = rc.x;\n'
+        '\t\t\t\t\tvp_y = physH - rc.y - rc.h;  // GL Y-flip with physical height\n'
+        '\t\t\t\t\tvp_w = rc.w;\n'
+        '\t\t\t\t\tvp_h = rc.h;\n'
+        '\t\t\t\t} else {\n'
+        '\t\t\t\t\tvp_y = curFBHeight_ - vp_y - vp_h;\n'
+        '\t\t\t\t}\n'
+        '\t\t\t}\n'
+        '\n'
+        '\t\t\t// TODO: Support FP viewports through glViewportArrays\n'
+        '\t\t\tif (viewport.x != vp_x || viewport.y != vp_y || viewport.w != vp_w || viewport.h != vp_h) {\n'
+        '\t\t\t\tglViewport((GLint)vp_x, (GLint)vp_y, (GLsizei)vp_w, (GLsizei)vp_h);'
+    )
+    if old not in content:
+        print(f"ERROR: Could not find VIEWPORT block in {filepath}")
+        sys.exit(1)
+    content = content.replace(old, new, 1)
+    changes += 1
+
+    # Update the viewport cache variables to use our transformed values
+    old = (
+        '\t\t\t\tviewport.x = c.viewport.vp.x;\n'
+        '\t\t\t\tviewport.y = y;\n'
+        '\t\t\t\tviewport.w = c.viewport.vp.w;\n'
+        '\t\t\t\tviewport.h = c.viewport.vp.h;'
+    )
+    new = (
+        '\t\t\t\tviewport.x = vp_x;\n'
+        '\t\t\t\tviewport.y = vp_y;\n'
+        '\t\t\t\tviewport.w = vp_w;\n'
+        '\t\t\t\tviewport.h = vp_h;'
+    )
+    if old not in content:
+        print(f"ERROR: Could not find viewport cache block in {filepath}")
+        sys.exit(1)
+    content = content.replace(old, new, 1)
+    changes += 1
+
+    # ── Scissor: same rotation treatment ──
+    old = (
+        'case GLRRenderCommand::SCISSOR:\n'
+        '\t\t{\n'
+        '\t\t\tint y = c.scissor.rc.y;\n'
+        '\t\t\tif (!curFB_)\n'
+        '\t\t\t\ty = curFBHeight_ - y - c.scissor.rc.h;\n'
+        '\t\t\tif (scissorRc.x != c.scissor.rc.x || scissorRc.y != y || scissorRc.w != c.scissor.rc.w || scissorRc.h != c.scissor.rc.h) {\n'
+        '\t\t\t\tglScissor(c.scissor.rc.x, y, c.scissor.rc.w, c.scissor.rc.h);\n'
+        '\t\t\t\tscissorRc.x = c.scissor.rc.x;\n'
+        '\t\t\t\tscissorRc.y = y;\n'
+        '\t\t\t\tscissorRc.w = c.scissor.rc.w;\n'
+        '\t\t\t\tscissorRc.h = c.scissor.rc.h;\n'
+        '\t\t\t}'
+    )
+    new = (
+        'case GLRRenderCommand::SCISSOR:\n'
+        '\t\t{\n'
+        '\t\t\tint sc_x = c.scissor.rc.x;\n'
+        '\t\t\tint sc_y = c.scissor.rc.y;\n'
+        '\t\t\tint sc_w = c.scissor.rc.w;\n'
+        '\t\t\tint sc_h = c.scissor.rc.h;\n'
+        '\t\t\tif (!curFB_) {\n'
+        '\t\t\t\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
+        '\t\t\t\t\tint physW = curFBWidth_, physH = curFBHeight_;\n'
+        '\t\t\t\t\tif (g_display.rotation == DisplayRotation::ROTATE_90 || g_display.rotation == DisplayRotation::ROTATE_270)\n'
+        '\t\t\t\t\t\tstd::swap(physW, physH);\n'
+        '\t\t\t\t\tDisplayRect<int> rc{ sc_x, sc_y, sc_w, sc_h };\n'
+        '\t\t\t\t\tRotateRectToDisplay(rc, physW, physH);\n'
+        '\t\t\t\t\tsc_x = rc.x;\n'
+        '\t\t\t\t\tsc_y = physH - rc.y - rc.h;\n'
+        '\t\t\t\t\tsc_w = rc.w;\n'
+        '\t\t\t\t\tsc_h = rc.h;\n'
+        '\t\t\t\t} else {\n'
+        '\t\t\t\t\tsc_y = curFBHeight_ - sc_y - sc_h;\n'
+        '\t\t\t\t}\n'
+        '\t\t\t}\n'
+        '\t\t\tif (scissorRc.x != sc_x || scissorRc.y != sc_y || scissorRc.w != sc_w || scissorRc.h != sc_h) {\n'
+        '\t\t\t\tglScissor(sc_x, sc_y, sc_w, sc_h);\n'
+        '\t\t\t\tscissorRc.x = sc_x;\n'
+        '\t\t\t\tscissorRc.y = sc_y;\n'
+        '\t\t\t\tscissorRc.w = sc_w;\n'
+        '\t\t\t\tscissorRc.h = sc_h;\n'
+        '\t\t\t}'
+    )
+    if old not in content:
+        print(f"ERROR: Could not find SCISSOR block in {filepath}")
+        sys.exit(1)
+    content = content.replace(old, new, 1)
+    changes += 1
+
+    with open(filepath, 'w') as f:
+        f.write(content)
+
+    print(f"Patched {filepath}: {changes} modifications")
 
 
 if __name__ == '__main__':
-    patch('SDL/SDLMain.cpp')
+    patch_sdlmain('SDL/SDLMain.cpp')
+    patch_glqueuerunner('Common/GPU/OpenGL/GLQueueRunner.cpp')
