@@ -24,35 +24,6 @@ Patches in `patches/common/` are applied to all builds. Device-specific patches 
 | `fullscreen.py` | `SDL_WINDOW_FULLSCREEN_DESKTOP` → `SDL_WINDOW_FULLSCREEN` (required for DRM/KMS) |
 | `hide-cursor.py` | Unconditionally hide mouse cursor |
 | `no-mute-secondary.py` | Remove auto-mute when PPSSPP_ID > 1 |
-| `spruceos-paths.py` | Hardcode SpruceOS memstick path (config, saves, states) |
-
-### Changing the memstick path
-
-The `spruceos-paths.py` patch hardcodes where PPSSPP stores all its data (config, saves, savestates, screenshots, cheats, textures, etc.). Everything derives from a single **memstick path**.
-
-To change it, edit the `MEMSTICK_PATH` variable at the top of `patches/common/spruceos-paths.py`:
-
-```python
-MEMSTICK_PATH = "/mnt/SDCARD/Saves/.config/ppsspp"
-```
-
-This produces the following directory layout:
-
-```
-/mnt/SDCARD/Saves/.config/ppsspp/
-└── PSP/
-    ├── SYSTEM/          ← ppsspp.ini, controls.ini
-    ├── SAVEDATA/        ← game saves
-    ├── PPSSPP_STATE/    ← save states
-    ├── SCREENSHOT/      ← screenshots
-    ├── CHEATS/          ← cheat files
-    ├── TEXTURES/        ← texture replacements
-    ├── PLUGINS/         ← plugins
-    ├── GAME/            ← homebrew
-    └── shaders/         ← custom shaders
-```
-
-After editing, push to trigger a rebuild. The new path will be baked into all binaries.
 
 ### Assets path
 
