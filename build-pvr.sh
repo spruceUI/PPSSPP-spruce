@@ -32,7 +32,7 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/usr/bin:${PATH}"
 
-# Configure for PowerVR: SDL2 + GLES2 via fbdev + EGL
+# Configure for PowerVR: SDL2 + GLES2 via fbdev (SDL handles GL context)
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
@@ -44,7 +44,7 @@ cmake .. \
     -DSDL2_LIBRARY="/opt/sysroot/usr/lib/libSDL2.a" \
     -DSDL2_INCLUDE_DIR="/opt/sysroot/usr/include/SDL2" \
     -DUSING_GLES2=ON \
-    -DUSING_EGL=ON \
+    -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
     -DVULKAN=OFF \
     -DUSING_X11_VULKAN=OFF \
