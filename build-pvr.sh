@@ -40,8 +40,8 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Wno-error" \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
-    -DSDL2_LIBRARY="/opt/sysroot/usr/lib/libSDL2.a;-ldl;-lpthread;-lm" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -ldl -lpthread -lm" \
+    -DSDL2_LIBRARY="/opt/sysroot/usr/lib/libSDL2.a" \
     -DSDL2_INCLUDE_DIR="/opt/sysroot/usr/include/SDL2" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=ON \
