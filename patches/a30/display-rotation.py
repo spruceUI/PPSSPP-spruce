@@ -285,45 +285,6 @@ def patch_glqueuerunner(filepath):
     print(f"Patched {filepath}: {changes} modifications")
 
 
-def patch_display(filepath):
-    with open(filepath, 'r') as f:
-        content = f.read()
-
-    # Fix ortho * rot_matrix multiplication order for OpenGL.
-    # Vulkan's ortho has y increasing downward (same as screen coords),
-    # so ortho * rot works correctly. GL's ortho has y flipped, so
-    # ortho * rot applies rotation in the wrong space (dp instead of NDC).
-    # Using rot * ortho applies ortho first (dp→NDC), then rotates in NDC.
-    old = (
-        '\t// Compensate for rotated display if needed.\n'
-        '\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
-        '\t\tortho = ortho * g_display.rot_matrix;\n'
-        '\t}'
-    )
-    new = (
-        '\t// Compensate for rotated display if needed.\n'
-        '\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
-        '\t\tif (coordConvention == CoordConvention::OpenGL) {\n'
-        '\t\t\t// GL ortho has Y flipped vs Vulkan, so we must apply rotation\n'
-        '\t\t\t// after projection (in NDC space), not before.\n'
-        '\t\t\tortho = g_display.rot_matrix * ortho;\n'
-        '\t\t} else {\n'
-        '\t\t\tortho = ortho * g_display.rot_matrix;\n'
-        '\t\t}\n'
-        '\t}'
-    )
-    if old not in content:
-        print(f"ERROR: Could not find rotation block in {filepath}")
-        sys.exit(1)
-    content = content.replace(old, new, 1)
-
-    with open(filepath, 'w') as f:
-        f.write(content)
-
-    print(f"Patched {filepath}: fixed ortho*rot order for GL")
-
-
 if __name__ == '__main__':
     patch_sdlmain('SDL/SDLMain.cpp')
     patch_glqueuerunner('Common/GPU/OpenGL/GLQueueRunner.cpp')
-    patch_display('Common/System/Display.cpp')
