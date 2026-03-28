@@ -154,7 +154,7 @@ def patch_glqueuerunner(filepath):
 
     changes = 0
 
-    # ── Add Display.h include ──
+    # ── Add Display.h include (for DisplayRotation enum and g_display) ──
     old = '#include "Common/Math/math_util.h"'
     new = '#include "Common/Math/math_util.h"\n#include "Common/System/Display.h"'
     if old not in content:
@@ -163,7 +163,11 @@ def patch_glqueuerunner(filepath):
     content = content.replace(old, new, 1)
     changes += 1
 
-    # ── Viewport: use RotateRectToDisplay for backbuffer (mirrors VulkanQueueRunner) ──
+    # ── Viewport: rotate for backbuffer ──
+    # For GL with ortho*rot, dp(x,y) maps to physical(y,x) for ROTATE_90.
+    # The viewport/scissor must use the same transform: just swap x/y and w/h.
+    # Don't use RotateRectToDisplay (Vulkan formula) — it doesn't match the
+    # GL ortho*rot shader transform due to different Y conventions.
     old = (
         'case GLRRenderCommand::VIEWPORT:\n'
         '\t\t{\n'
@@ -183,17 +187,9 @@ def patch_glqueuerunner(filepath):
         '\t\t\tfloat vp_w = c.viewport.vp.w;\n'
         '\t\t\tfloat vp_h = c.viewport.vp.h;\n'
         '\t\t\tif (!curFB_) {\n'
-        '\t\t\t\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
-        '\t\t\t\t\t// Rotate viewport from logical to physical coords, like VulkanQueueRunner does\n'
-        '\t\t\t\t\tfloat physW = curFBWidth_, physH = curFBHeight_;\n'
-        '\t\t\t\t\tif (g_display.rotation == DisplayRotation::ROTATE_90 || g_display.rotation == DisplayRotation::ROTATE_270)\n'
-        '\t\t\t\t\t\tstd::swap(physW, physH);\n'
-        '\t\t\t\t\tDisplayRect<float> rc{ vp_x, vp_y, vp_w, vp_h };\n'
-        '\t\t\t\t\tRotateRectToDisplay(rc, physW, physH);\n'
-        '\t\t\t\t\tvp_x = rc.x;\n'
-        '\t\t\t\t\tvp_y = physH - rc.y - rc.h;  // GL Y-flip with physical height\n'
-        '\t\t\t\t\tvp_w = rc.w;\n'
-        '\t\t\t\t\tvp_h = rc.h;\n'
+        '\t\t\t\tif (g_display.rotation == DisplayRotation::ROTATE_90 || g_display.rotation == DisplayRotation::ROTATE_270) {\n'
+        '\t\t\t\t\tstd::swap(vp_x, vp_y);\n'
+        '\t\t\t\t\tstd::swap(vp_w, vp_h);\n'
         '\t\t\t\t} else {\n'
         '\t\t\t\t\tvp_y = curFBHeight_ - vp_y - vp_h;\n'
         '\t\t\t\t}\n'
@@ -228,7 +224,7 @@ def patch_glqueuerunner(filepath):
     content = content.replace(old, new, 1)
     changes += 1
 
-    # ── Scissor: same rotation treatment ──
+    # ── Scissor: same swap treatment as viewport ──
     old = (
         'case GLRRenderCommand::SCISSOR:\n'
         '\t\t{\n'
@@ -251,16 +247,9 @@ def patch_glqueuerunner(filepath):
         '\t\t\tint sc_w = c.scissor.rc.w;\n'
         '\t\t\tint sc_h = c.scissor.rc.h;\n'
         '\t\t\tif (!curFB_) {\n'
-        '\t\t\t\tif (g_display.rotation != DisplayRotation::ROTATE_0) {\n'
-        '\t\t\t\t\tint physW = curFBWidth_, physH = curFBHeight_;\n'
-        '\t\t\t\t\tif (g_display.rotation == DisplayRotation::ROTATE_90 || g_display.rotation == DisplayRotation::ROTATE_270)\n'
-        '\t\t\t\t\t\tstd::swap(physW, physH);\n'
-        '\t\t\t\t\tDisplayRect<int> rc{ sc_x, sc_y, sc_w, sc_h };\n'
-        '\t\t\t\t\tRotateRectToDisplay(rc, physW, physH);\n'
-        '\t\t\t\t\tsc_x = rc.x;\n'
-        '\t\t\t\t\tsc_y = physH - rc.y - rc.h;\n'
-        '\t\t\t\t\tsc_w = rc.w;\n'
-        '\t\t\t\t\tsc_h = rc.h;\n'
+        '\t\t\t\tif (g_display.rotation == DisplayRotation::ROTATE_90 || g_display.rotation == DisplayRotation::ROTATE_270) {\n'
+        '\t\t\t\t\tstd::swap(sc_x, sc_y);\n'
+        '\t\t\t\t\tstd::swap(sc_w, sc_h);\n'
         '\t\t\t\t} else {\n'
         '\t\t\t\t\tsc_y = curFBHeight_ - sc_y - sc_h;\n'
         '\t\t\t\t}\n'
