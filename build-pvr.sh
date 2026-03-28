@@ -32,7 +32,7 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/usr/bin:${PATH}"
 
-# Configure for PowerVR: SDL2 + GLES2 via fbdev, EGL OFF (SDL handles GL context)
+# Configure for PowerVR: SDL2 + GLES2 via fbdev + EGL
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
@@ -42,7 +42,7 @@ cmake .. \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
     -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
-    -DUSING_EGL=OFF \
+    -DUSING_EGL=ON \
     -DUSING_FBDEV=ON \
     -DVULKAN=OFF \
     -DUSING_X11_VULKAN=OFF \
