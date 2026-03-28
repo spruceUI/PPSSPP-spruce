@@ -32,7 +32,8 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/usr/bin:${PATH}"
 
-# Configure for PowerVR: SDL2 + GLES2 via fbdev (SDL handles GL context)
+# Configure for PowerVR: SDL2 + GLES2 (SDL handles GL context)
+# SDL2 is dynamically linked — device uses PyUI's SDL2 with KMSDRM support
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
@@ -40,9 +41,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Wno-error" \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -no-pie -ldl -lpthread -lm" \
-    -DSDL2_LIBRARY="/opt/sysroot/usr/lib/libSDL2.a" \
-    -DSDL2_INCLUDE_DIR="/opt/sysroot/usr/include/SDL2" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
