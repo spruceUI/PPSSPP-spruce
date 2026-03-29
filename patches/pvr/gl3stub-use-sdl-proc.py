@@ -21,7 +21,7 @@ GLboolean gl3stubInit() {
     #define FIND_PROC(s) s = (void*)eglGetProcAddress(#s)'''
 
     new = '''#include "EGL/egl.h"
-#include "SDL.h"
+#include "SDL2/SDL.h"
 
 GLboolean gl3stubInit() {
     #define FIND_PROC(s) s = (void*)SDL_GL_GetProcAddress(#s)'''
