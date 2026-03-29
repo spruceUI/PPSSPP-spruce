@@ -29,11 +29,41 @@ RUN tar xzf /tmp/SDL2-2.26.1.GE8300.tgz -C /opt/ && \
 
 # Create merged sysroot: Linaro libc base + SDK overlay (PowerVR, SDL2)
 # Linaro sysroot has /lib (ld-linux, crt files). SDK has /usr (PowerVR, SDL2, device libs).
-# Use GE8300 SDL2 headers instead of SDK's stock headers for PowerVR compatibility
 RUN cp -a /opt/aarch64-linux-gnu-7.5.0-linaro/aarch64-linux-gnu/libc /opt/sysroot && \
     cp -a /opt/smartpro-sdk/usr/include/* /opt/sysroot/usr/include/ && \
-    cp -a /opt/smartpro-sdk/usr/lib/* /opt/sysroot/usr/lib/ && \
-    cp -a /opt/SDL2-2.26.1/include/* /opt/sysroot/usr/include/SDL2/
+    cp -a /opt/smartpro-sdk/usr/lib/* /opt/sysroot/usr/lib/
+
+# Cross-compile SDL2 from GE8300 source with PowerVR mali-fbdev driver
+# This produces a matching .so that we ship alongside PPSSPP
+RUN cd /opt/SDL2-2.26.1 && \
+    ./configure \
+        --host=aarch64-linux-gnu \
+        --prefix=/opt/sdl2-built \
+        --enable-video-mali \
+        --enable-video-opengles \
+        --enable-video-opengl=no \
+        --enable-video-x11=no \
+        --enable-video-wayland=no \
+        --enable-video-kmsdrm=no \
+        --enable-video-dummy \
+        --enable-alsa \
+        --enable-pulseaudio=no \
+        --enable-esd=no \
+        --enable-arts=no \
+        --enable-nas=no \
+        --disable-video-vulkan \
+        CC=aarch64-linux-gnu-gcc \
+        CXX=aarch64-linux-gnu-g++ \
+        CFLAGS="--sysroot=/opt/sysroot -I/opt/sysroot/usr/include" \
+        LDFLAGS="--sysroot=/opt/sysroot -L/opt/sysroot/usr/lib" && \
+    make -j$(nproc) && \
+    make install
+
+# Replace SDK's SDL2 in sysroot with our built version
+RUN cp -a /opt/sdl2-built/include/SDL2/* /opt/sysroot/usr/include/SDL2/ && \
+    cp -a /opt/sdl2-built/lib/libSDL2*.so* /opt/sysroot/usr/lib/ && \
+    cp -a /opt/sdl2-built/lib/libSDL2.a /opt/sysroot/usr/lib/ && \
+    cp -a /opt/sdl2-built/lib/pkgconfig/sdl2.pc /opt/sysroot/usr/lib/pkgconfig/
 
 # Create CMake toolchain file — Ubuntu's GCC + merged sysroot
 RUN printf '\

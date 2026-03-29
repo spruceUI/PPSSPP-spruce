@@ -91,3 +91,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload "latest" output/PPSSPPSDL_TrimUI --clobber
+          gh release upload "latest" output/libSDL2-2.0.so.0 --clobber || true

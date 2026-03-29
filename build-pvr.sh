@@ -15,15 +15,23 @@ fi
 
 cd ppsspp
 
-# Apply common patches
+# Apply common patches (skip fullscreen patch — PVR needs FULLSCREEN_DESKTOP)
 echo "=== Applying patches ==="
 for patch in /patches/common/*.py; do
-    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+    [ -f "$patch" ] || continue
+    case "$(basename $patch)" in
+        fullscreen.py) echo "Skipping: $(basename $patch) (PVR uses FULLSCREEN_DESKTOP)" ;;
+        *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
+    esac
 done
 
-# Apply PVR-specific patches
+# Apply PVR-specific patches (skip revert-fullscreen since we skipped the original)
 for patch in /patches/pvr/*.py; do
-    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+    [ -f "$patch" ] || continue
+    case "$(basename $patch)" in
+        revert-fullscreen.py|debug-gl-init.py) echo "Skipping: $(basename $patch)" ;;
+        *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
+    esac
 done
 
 mkdir -p build && cd build
@@ -69,6 +77,9 @@ make -j$(nproc) PPSSPPSDL
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
 aarch64-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
+
+# Ship our built SDL2 alongside the binary
+cp /opt/sdl2-built/lib/libSDL2-2.0.so.0 "$OUTPUT_DIR/libSDL2-2.0.so.0"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
