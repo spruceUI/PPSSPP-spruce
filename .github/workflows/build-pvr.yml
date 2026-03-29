@@ -92,3 +92,4 @@ jobs:
         run: |
           gh release upload "latest" output/PPSSPPSDL_TrimUI --clobber
           gh release upload "latest" output/libSDL2-2.0.so.0 --clobber || true
+          gh release upload "latest" output/setalpha --clobber || true
