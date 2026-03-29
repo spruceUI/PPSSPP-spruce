@@ -1,0 +1,38 @@
+name: Build All
+
+on:
+  workflow_dispatch:
+    inputs:
+      ppsspp_version:
+        description: 'PPSSPP version tag'
+        default: 'v1.20.3'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-64:
+    uses: ./.github/workflows/build-64.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
+
+  build-a30:
+    uses: ./.github/workflows/build-a30.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
+
+  build-flip:
+    uses: ./.github/workflows/build-flip.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
+
+  build-pvr:
+    uses: ./.github/workflows/build-pvr.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
+
+  build-tsps:
+    uses: ./.github/workflows/build-tsps.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
