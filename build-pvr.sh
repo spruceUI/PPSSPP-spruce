@@ -44,7 +44,7 @@ cmake .. \
     -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
-    -DUSING_FBDEV=OFF \
+    -DUSING_FBDEV=ON \
     -DVULKAN=OFF \
     -DUSING_X11_VULKAN=OFF \
     -DUSE_WAYLAND_WSI=OFF \
