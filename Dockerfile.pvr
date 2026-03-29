@@ -82,6 +82,9 @@ set(ENV{PKG_CONFIG_SYSROOT_DIR} "/opt/sysroot")\n\
 set(ENV{PKG_CONFIG_LIBDIR} "/opt/sysroot/usr/lib/pkgconfig")\n\
 ' > /tmp/pvr-toolchain.cmake
 
+COPY tools/pvr/setalpha.c /tmp/setalpha.c
+RUN aarch64-linux-gnu-gcc --sysroot=/opt/sysroot -static -o /opt/setalpha /tmp/setalpha.c
+
 COPY build-pvr.sh /build-pvr.sh
 RUN chmod +x /build-pvr.sh
 COPY patches/ /patches/
