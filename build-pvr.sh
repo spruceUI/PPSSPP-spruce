@@ -41,10 +41,10 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Wno-error" \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -Wl,--no-as-needed -lIMGegl -lglslcompiler -lsrv_um -lusc -Wl,--as-needed" \
+    -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
-    -DUSING_FBDEV=ON \
+    -DUSING_FBDEV=OFF \
     -DVULKAN=OFF \
     -DUSING_X11_VULKAN=OFF \
     -DUSE_WAYLAND_WSI=OFF \
