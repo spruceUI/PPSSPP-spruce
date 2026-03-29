@@ -112,6 +112,48 @@ def patch(filepath):
         sys.exit(1)
     content2 = content2.replace(old7, new7)
 
+    old8 = '''	// Start by assuming we're at 2.0.
+	int parsed[2] = {2, 0};'''
+    new8 = '''	fprintf(stderr, "DEBUG: parsing version string...\\n"); fflush(stderr);
+	// Start by assuming we're at 2.0.
+	int parsed[2] = {2, 0};'''
+
+    if old8 not in content2:
+        print(f"WARNING: version parse block not found in {filepath2}")
+        sys.exit(1)
+    content2 = content2.replace(old8, new8)
+
+    old9 = '''#ifdef GL_MAJOR_VERSION
+		// Before grabbing the values, reset the error.
+		glGetError();
+		glGetIntegerv(GL_MAJOR_VERSION, &gl_extensions.ver[0]);'''
+    new9 = '''#ifdef GL_MAJOR_VERSION
+		fprintf(stderr, "DEBUG: GL_MAJOR_VERSION query...\\n"); fflush(stderr);
+		// Before grabbing the values, reset the error.
+		glGetError();
+		glGetIntegerv(GL_MAJOR_VERSION, &gl_extensions.ver[0]);'''
+
+    if old9 not in content2:
+        print(f"WARNING: GL_MAJOR_VERSION block not found in {filepath2}")
+        sys.exit(1)
+    content2 = content2.replace(old9, new9)
+
+    old10 = '''			gl_extensions.GLES3 = gl3stubInit();'''
+    new10 = '''			fprintf(stderr, "DEBUG: gl3stubInit...\\n"); fflush(stderr);
+				gl_extensions.GLES3 = gl3stubInit();
+				fprintf(stderr, "DEBUG: gl3stubInit done, GLES3=%d\\n", (int)gl_extensions.GLES3); fflush(stderr);'''
+
+    # Only replace the first occurrence (inside the else branch at line ~306)
+    if old10 not in content2:
+        print(f"WARNING: gl3stubInit block not found in {filepath2}")
+        sys.exit(1)
+    content2 = content2.replace(old10, new10, 1)
+
+    if old7 not in content2:
+        print(f"WARNING: glGetIntegerv block not found in {filepath2}")
+        sys.exit(1)
+    content2 = content2.replace(old7, new7)
+
     with open(filepath2, 'w') as f:
         f.write(content2)
 
