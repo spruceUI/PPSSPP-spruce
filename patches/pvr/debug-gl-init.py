@@ -50,6 +50,36 @@ def patch(filepath):
         sys.exit(1)
     content = content.replace(old3, new3, 1)
 
+    # Add logging after context creation success through to CheckGLExtensions
+    old4 = '''	// At this point, we have a window that we can show finally.
+	SDL_ShowWindow(window);'''
+
+    new4 = '''	// At this point, we have a window that we can show finally.
+	fprintf(stderr, "DEBUG: SDL_ShowWindow...\\n"); fflush(stderr);
+	SDL_ShowWindow(window);
+	fprintf(stderr, "DEBUG: SDL_ShowWindow done\\n"); fflush(stderr);'''
+
+    if old4 not in content:
+        print(f"WARNING: SDL_ShowWindow block not found in {filepath}")
+        sys.exit(1)
+    content = content.replace(old4, new4)
+
+    old5 = '''	// Finally we can do the regular initialization.
+	CheckGLExtensions();
+	draw_ = Draw::T3DCreateGLContext(true);'''
+
+    new5 = '''	// Finally we can do the regular initialization.
+	fprintf(stderr, "DEBUG: CheckGLExtensions...\\n"); fflush(stderr);
+	CheckGLExtensions();
+	fprintf(stderr, "DEBUG: CheckGLExtensions done, T3DCreateGLContext...\\n"); fflush(stderr);
+	draw_ = Draw::T3DCreateGLContext(true);
+	fprintf(stderr, "DEBUG: T3DCreateGLContext done\\n"); fflush(stderr);'''
+
+    if old5 not in content:
+        print(f"WARNING: CheckGLExtensions block not found in {filepath}")
+        sys.exit(1)
+    content = content.replace(old5, new5)
+
     with open(filepath, 'w') as f:
         f.write(content)
 
