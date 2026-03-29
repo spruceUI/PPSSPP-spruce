@@ -67,7 +67,7 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_SmartProS"
-/opt/tsps-sdk/opt/ext-toolchain/bin/aarch64-none-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL_SmartProS"
+/opt/tsps-sdk/opt/ext-toolchain/bin/aarch64-none-linux-gnu-strip -s "$OUTPUT_DIR/PPSSPPSDL_SmartProS"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"

@@ -76,7 +76,7 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
-aarch64-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
+aarch64-linux-gnu-strip -s "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
 
 # Ship our built SDL2 alongside the binary
 cp /opt/sdl2-built/lib/libSDL2-2.0.so.0 "$OUTPUT_DIR/libSDL2-2.0.so.0"

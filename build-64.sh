@@ -63,7 +63,7 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/"
-aarch64-linux-gnu-strip "$OUTPUT_DIR/PPSSPPSDL"
+aarch64-linux-gnu-strip -s "$OUTPUT_DIR/PPSSPPSDL"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"

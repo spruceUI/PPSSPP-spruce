@@ -67,7 +67,7 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_Flip"
-/opt/flip/aarch64-flip-linux-gnu/bin/strip "$OUTPUT_DIR/PPSSPPSDL_Flip"
+/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_Flip"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"

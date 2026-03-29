@@ -88,7 +88,7 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_A30"
-/opt/a30/bin/arm-a30-linux-gnueabihf-strip "$OUTPUT_DIR/PPSSPPSDL_A30"
+/opt/a30/bin/arm-a30-linux-gnueabihf-strip -s "$OUTPUT_DIR/PPSSPPSDL_A30"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
