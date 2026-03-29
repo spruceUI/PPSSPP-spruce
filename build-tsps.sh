@@ -38,8 +38,8 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/tsps-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a55 -flto -Wno-error" \
-    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a55 -flto -Wno-error" \
+    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a55 -fomit-frame-pointer -flto -Wno-error" \
+    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a55 -fomit-frame-pointer -flto -Wno-error" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,--copy-dt-needed-entries -flto" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
