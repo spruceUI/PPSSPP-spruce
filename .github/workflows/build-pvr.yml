@@ -87,10 +87,8 @@ jobs:
             -v ${{ github.workspace }}/ccache:/ccache \
             ${{ env.IMAGE }}:latest
 
-      - name: Upload binary and assets
+      - name: Upload binary
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release upload "beta-${{ github.ref_name }}" output/PPSSPPSDL_TrimUI --clobber
-          gh release upload "beta-${{ github.ref_name }}" output/libSDL2-2.0.so.0 --clobber || true
-          gh release upload "beta-${{ github.ref_name }}" output/setalpha --clobber || true
