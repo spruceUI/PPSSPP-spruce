@@ -80,6 +80,43 @@ def patch(filepath):
         sys.exit(1)
     content = content.replace(old5, new5)
 
+    # Add logging inside CheckGLExtensions at the first GL calls
+    filepath2 = 'Common/GPU/OpenGL/GLFeatures.cpp'
+    with open(filepath2, 'r') as f:
+        content2 = f.read()
+
+    old6 = '''	const char *renderer = (const char *)glGetString(GL_RENDERER);
+	const char *versionStr = (const char *)glGetString(GL_VERSION);
+	const char *glslVersionStr = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);'''
+
+    new6 = '''	fprintf(stderr, "DEBUG: glGetString(GL_RENDERER)...\\n"); fflush(stderr);
+	const char *renderer = (const char *)glGetString(GL_RENDERER);
+	fprintf(stderr, "DEBUG: renderer=%s\\n", renderer ? renderer : "NULL"); fflush(stderr);
+	const char *versionStr = (const char *)glGetString(GL_VERSION);
+	fprintf(stderr, "DEBUG: version=%s\\n", versionStr ? versionStr : "NULL"); fflush(stderr);
+	const char *glslVersionStr = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+	fprintf(stderr, "DEBUG: glsl=%s\\n", glslVersionStr ? glslVersionStr : "NULL"); fflush(stderr);'''
+
+    if old6 not in content2:
+        print(f"WARNING: glGetString block not found in {filepath2}")
+        sys.exit(1)
+    content2 = content2.replace(old6, new6)
+
+    old7 = '''	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_extensions.maxTextureSize);'''
+    new7 = '''	fprintf(stderr, "DEBUG: glGetIntegerv(GL_MAX_TEXTURE_SIZE)...\\n"); fflush(stderr);
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_extensions.maxTextureSize);
+	fprintf(stderr, "DEBUG: maxTextureSize=%d\\n", gl_extensions.maxTextureSize); fflush(stderr);'''
+
+    if old7 not in content2:
+        print(f"WARNING: glGetIntegerv block not found in {filepath2}")
+        sys.exit(1)
+    content2 = content2.replace(old7, new7)
+
+    with open(filepath2, 'w') as f:
+        f.write(content2)
+
+    print(f"Patched: Added debug logging inside CheckGLExtensions")
+
     with open(filepath, 'w') as f:
         f.write(content)
 
