@@ -32,9 +32,9 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/usr/bin:${PATH}"
 
-# Configure for PowerVR: SDL2 + GLES2 + EGL via FBDEV
+# Configure for PowerVR: SDL2 + GLES2 (SDL handles GL context)
 # SDL2 dynamically linked from /usr/trimui/lib (mali-fbdev driver)
-# Patch reuses SDL's EGL context instead of PPSSPP creating its own
+# Patch skips GL version probing — requests GLES 2.0 directly
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
@@ -44,12 +44,11 @@ cmake .. \
     -DCMAKE_CXX_FLAGS="-Wno-error" \
     -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" \
     -DUSING_GLES2=ON \
-    -DUSING_EGL=ON \
+    -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
-    -DVULKAN=ON \
+    -DVULKAN=OFF \
     -DUSING_X11_VULKAN=OFF \
     -DUSE_WAYLAND_WSI=OFF \
-    -DUSE_VULKAN_DISPLAY_KHR=ON \
     -DBUILD_SHARED_LIBS=OFF \
     -DUSE_SYSTEM_LIBPNG=OFF \
     -DUSE_SYSTEM_FFMPEG=OFF \
