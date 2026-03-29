@@ -25,16 +25,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ensure latest release exists
+      - name: Ensure beta release exists
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="latest"
+          TAG="beta-${{ github.ref_name }}"
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" \
               --target "${{ github.ref_name }}" \
-              --title "Latest Build" \
-              --notes "PPSSPP ${{ github.event.inputs.ppsspp_version || 'v1.20.3' }} binaries for SpruceOS" \
+              --title "Beta Build (${{ github.ref_name }})" \
+              --prerelease \
+              --notes "PPSSPP binaries built from ${{ github.ref_name }}" \
             || true
 
       - name: Set up Docker Buildx
@@ -79,4 +80,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "latest" output/PPSSPPSDL_Flip --clobber
+          gh release upload "beta-${{ github.ref_name }}" output/PPSSPPSDL_Flip --clobber
