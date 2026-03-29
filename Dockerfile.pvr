@@ -22,11 +22,18 @@ RUN mkdir -p /opt/smartpro-sdk && \
     tar xzf /tmp/SDK_usr_tg5040_a133p.tgz -C /opt/smartpro-sdk/ && \
     rm /tmp/SDK_usr_tg5040_a133p.tgz
 
+# Extract GE8300-patched SDL2 source for PowerVR-compatible headers
+COPY toolchains/smartpro/SDL2-2.26.1.GE8300.tgz /tmp/
+RUN tar xzf /tmp/SDL2-2.26.1.GE8300.tgz -C /opt/ && \
+    rm /tmp/SDL2-2.26.1.GE8300.tgz
+
 # Create merged sysroot: Linaro libc base + SDK overlay (PowerVR, SDL2)
 # Linaro sysroot has /lib (ld-linux, crt files). SDK has /usr (PowerVR, SDL2, device libs).
+# Use GE8300 SDL2 headers instead of SDK's stock headers for PowerVR compatibility
 RUN cp -a /opt/aarch64-linux-gnu-7.5.0-linaro/aarch64-linux-gnu/libc /opt/sysroot && \
     cp -a /opt/smartpro-sdk/usr/include/* /opt/sysroot/usr/include/ && \
-    cp -a /opt/smartpro-sdk/usr/lib/* /opt/sysroot/usr/lib/
+    cp -a /opt/smartpro-sdk/usr/lib/* /opt/sysroot/usr/lib/ && \
+    cp -a /opt/SDL2-2.26.1/include/* /opt/sysroot/usr/include/SDL2/
 
 # Create CMake toolchain file — Ubuntu's GCC + merged sysroot
 RUN printf '\
