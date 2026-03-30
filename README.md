@@ -10,7 +10,7 @@ CI-built PPSSPP binaries for [SpruceOS](https://github.com/spruceUI/spruceOS), t
 | `PPSSPPSDL_TrimUI` | Brick, SmartPro (TSP) | A133 / PowerVR GE8300 | Ubuntu Focal GCC 9.4 + SmartPro SDK |
 | `PPSSPPSDL_SmartProS` | SmartPro S (TSPS) | A523 / Mali G57 | Buildroot GCC 10.3 |
 | `PPSSPPSDL_Flip` | Flip | RK3566 / Mali G52 | Steward-Fu GCC 13.3 |
-| `PPSSPPSDL_Pixel2` | GKD Pixel 2 | RK3326 / Mali G31 | Ubuntu Noble Clang |
+| `PPSSPPSDL_Pixel2` | GKD Pixel 2 | RK3326 / Mali G31 | Ubuntu Noble Clang 18 |
 | `PPSSPPSDL_A30` | Miyoo A30 | A33 / Mali 400 | Steward-Fu GCC 13.2 |
 
 All builds are triggered via **GitHub Actions > workflow_dispatch**. Binaries are uploaded to the [`latest` release](https://github.com/spruceUI/PPSSPP-spruce/releases/tag/latest).
