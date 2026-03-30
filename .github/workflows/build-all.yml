@@ -36,3 +36,6 @@ jobs:
     uses: ./.github/workflows/build-tsps.yml
     with:
       ppsspp_version: ${{ inputs.ppsspp_version }}
+
+  build-pixel2:
+    uses: ./.github/workflows/build-pixel2.yml
