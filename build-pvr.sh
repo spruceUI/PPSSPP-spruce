@@ -29,7 +29,7 @@ done
 for patch in /patches/pvr/*.py; do
     [ -f "$patch" ] || continue
     case "$(basename $patch)" in
-        revert-fullscreen.py|debug-gl-init.py) echo "Skipping: $(basename $patch)" ;;
+        revert-fullscreen.py|debug-gl-init.py|glfinish-before-swap.py) echo "Skipping: $(basename $patch)" ;;
         *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
     esac
 done
@@ -47,9 +47,9 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto -Wno-error" \
-    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto -Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -static-libstdc++ -flto" \
+    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
+    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
+    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -static-libstdc++ -flto=auto" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \

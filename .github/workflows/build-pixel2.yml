@@ -1,0 +1,79 @@
+name: Build PPSSPPSDL_Pixel2
+
+on:
+  workflow_dispatch:
+    inputs:
+      ppsspp_version:
+        description: 'PPSSPP commit or tag'
+        default: 'd357e6a32934800d3d80b49f910a603e1b069751'
+  workflow_call:
+    inputs:
+      ppsspp_version:
+        type: string
+        default: 'd357e6a32934800d3d80b49f910a603e1b069751'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure beta release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="beta-${{ github.ref_name }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --target "${{ github.ref_name }}" \
+              --title "Beta Build (${{ github.ref_name }})" \
+              --prerelease \
+              --notes "PPSSPP binaries built from ${{ github.ref_name }}" \
+            || true
+
+      - name: Set up QEMU for arm64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Download Pixel2 Docker image from RA repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download toolchains \
+            --repo spruceUI/RA \
+            --pattern "pixel2-docker.tar.gz" \
+            --dir .
+
+      - name: Load Docker image
+        run: gunzip -c pixel2-docker.tar.gz | docker load
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: ccache-pixel2
+          key: ccache-pixel2-ppsspp-${{ github.sha }}
+          restore-keys: ccache-pixel2-ppsspp-
+
+      - name: Build PPSSPP
+        run: |
+          mkdir -p output ccache-pixel2
+          chmod +x build-pixel2.sh
+          docker run --rm --platform linux/arm64 \
+            -e PPSSPP_VERSION=${{ github.event.inputs.ppsspp_version || 'd357e6a32934800d3d80b49f910a603e1b069751' }} \
+            -e CCACHE_DIR=/ccache \
+            -v ${{ github.workspace }}/output:/output \
+            -v ${{ github.workspace }}/ccache-pixel2:/ccache \
+            -v ${{ github.workspace }}/build-pixel2.sh:/build-pixel2.sh \
+            -v ${{ github.workspace }}/patches:/patches \
+            --entrypoint /build-pixel2.sh \
+            ra-builder-pixel2
+
+      - name: Upload binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "beta-${{ github.ref_name }}" output/PPSSPPSDL_Pixel2 --clobber
