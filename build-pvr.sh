@@ -29,7 +29,7 @@ done
 for patch in /patches/pvr/*.py; do
     [ -f "$patch" ] || continue
     case "$(basename $patch)" in
-        revert-fullscreen.py|debug-gl-init.py) echo "Skipping: $(basename $patch)" ;;
+        revert-fullscreen.py|debug-gl-init.py|glfinish-before-swap.py) echo "Skipping: $(basename $patch)" ;;
         *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
     esac
 done
