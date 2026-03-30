@@ -61,6 +61,7 @@ jobs:
       - name: Build PPSSPP
         run: |
           mkdir -p output ccache-pixel2
+          chmod +x build-pixel2.sh
           docker run --rm --platform linux/arm64 \
             -e PPSSPP_VERSION=${{ github.event.inputs.ppsspp_version || 'd357e6a32934800d3d80b49f910a603e1b069751' }} \
             -e CCACHE_DIR=/ccache \
