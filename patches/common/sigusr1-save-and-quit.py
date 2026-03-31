@@ -42,9 +42,7 @@ NEW2 = '''// X11 headers (via SDL_syswm.h) #define Status as int, breaking enum 
 #endif
 #include "Core/SaveState.h"
 #include "Core/ELF/ParamSFO.h"
-#include "Core/System.h"
-#include "Core/Config.h"
-#include "Common/Serialize/Serializer.h"'''
+#include "Core/System.h"'''
 
 if OLD2 not in src:
     print(f'ERROR: cannot find Core/System.h include in {PATH}', file=sys.stderr)
@@ -89,12 +87,7 @@ NEW4 = '''\t\tif (g_QuitRequested || g_RestartRequested)
 \t\t\tif (g_saveAndQuit) {
 \t\t\t\tg_saveAndQuit = 0;
 \t\t\t\tif (PSP_IsInited() && (GetUIState() == UISTATE_INGAME || GetUIState() == UISTATE_PAUSEMENU)) {
-\t\t\t\t\tstd::vector<u8> saveData;
-\t\t\t\t\tif (SaveState::SaveToRam(saveData) == CChunkFileReader::ERROR_NONE) {
-\t\t\t\t\t\tPath fn = SaveState::GenerateSaveSlotPath(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot, "ppst");
-\t\t\t\t\t\tstd::string title = g_paramSFO.GetValueString("TITLE");
-\t\t\t\t\t\tCChunkFileReader::SaveFile(fn, title, PPSSPP_GIT_VERSION, saveData.data(), saveData.size());
-\t\t\t\t\t}
+\t\t\t\t\tSaveState::SyncSaveSlot(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot);
 \t\t\t\t}
 \t\t\t\tg_QuitRequested = true;
 \t\t\t}
@@ -128,12 +121,7 @@ NEW5 = '''\t} else while (true) {
 \t\tif (g_saveAndQuit) {
 \t\t\tg_saveAndQuit = 0;
 \t\t\tif (PSP_IsInited() && (GetUIState() == UISTATE_INGAME || GetUIState() == UISTATE_PAUSEMENU)) {
-\t\t\t\tstd::vector<u8> saveData;
-\t\t\t\tif (SaveState::SaveToRam(saveData) == CChunkFileReader::ERROR_NONE) {
-\t\t\t\t\tPath fn = SaveState::GenerateSaveSlotPath(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot, "ppst");
-\t\t\t\t\tstd::string title = g_paramSFO.GetValueString("TITLE");
-\t\t\t\t\tCChunkFileReader::SaveFile(fn, title, PPSSPP_GIT_VERSION, saveData.data(), saveData.size());
-\t\t\t\t}
+\t\t\t\tSaveState::SyncSaveSlot(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot);
 \t\t\t}
 \t\t\tg_QuitRequested = true;
 \t\t}
