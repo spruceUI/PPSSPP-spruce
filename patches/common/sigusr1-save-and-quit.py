@@ -41,6 +41,7 @@ NEW2 = '''// X11 headers (via SDL_syswm.h) #define Status as int, breaking enum 
 #undef Status
 #endif
 #include "Core/SaveState.h"
+#include "Core/Core.h"
 #include "Core/ELF/ParamSFO.h"
 #include "Core/System.h"'''
 
@@ -87,6 +88,10 @@ NEW4 = '''\t\tif (g_QuitRequested || g_RestartRequested)
 \t\t\tif (g_saveAndQuit) {
 \t\t\t\tg_saveAndQuit = 0;
 \t\t\t\tif (PSP_IsInited() && (GetUIState() == UISTATE_INGAME || GetUIState() == UISTATE_PAUSEMENU)) {
+\t\t\t\t\tif (GetUIState() == UISTATE_PAUSEMENU) {
+\t\t\t\t\t\tUpdateUIState(UISTATE_INGAME);
+\t\t\t\t\t\tCore_Break(BreakReason::SavestateSave);
+\t\t\t\t\t}
 \t\t\t\t\tSaveState::SaveSlot(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot,
 \t\t\t\t\t\t[](auto, auto) { g_QuitRequested = true; });
 \t\t\t\t} else {
@@ -123,6 +128,10 @@ NEW5 = '''\t} else while (true) {
 \t\tif (g_saveAndQuit) {
 \t\t\tg_saveAndQuit = 0;
 \t\t\tif (PSP_IsInited() && (GetUIState() == UISTATE_INGAME || GetUIState() == UISTATE_PAUSEMENU)) {
+\t\t\t\tif (GetUIState() == UISTATE_PAUSEMENU) {
+\t\t\t\t\tUpdateUIState(UISTATE_INGAME);
+\t\t\t\t\tCore_Break(BreakReason::SavestateSave);
+\t\t\t\t}
 \t\t\t\tSaveState::SaveSlot(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot,
 \t\t\t\t\t[](auto, auto) { g_QuitRequested = true; });
 \t\t\t} else {
