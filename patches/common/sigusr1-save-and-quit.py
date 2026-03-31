@@ -36,7 +36,11 @@ src = src.replace(OLD1, NEW1, 1)
 
 OLD2 = '''#include "Core/System.h"'''
 
-NEW2 = '''#include "Core/SaveState.h"
+NEW2 = '''// X11 headers (via SDL_syswm.h) #define Status as int, breaking enum class Status in SaveState.h
+#ifdef Status
+#undef Status
+#endif
+#include "Core/SaveState.h"
 #include "Core/ELF/ParamSFO.h"
 #include "Core/System.h"'''
 
