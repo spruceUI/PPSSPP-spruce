@@ -88,10 +88,10 @@ NEW4 = '''\t\tif (g_QuitRequested || g_RestartRequested)
 \t\t\t\tg_saveAndQuit = 0;
 \t\t\t\tif (PSP_IsInited() && (GetUIState() == UISTATE_INGAME || GetUIState() == UISTATE_PAUSEMENU)) {
 \t\t\t\t\tSaveState::SaveSlot(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot,
-\t\t\t\t\t\t[](auto, auto) { g_QuitRequested = true; });
-\t\t\t\t} else {
-\t\t\t\t\tg_QuitRequested = true;
+\t\t\t\t\t\t[](auto, auto) {});
+\t\t\t\t\tSaveState::Process();
 \t\t\t\t}
+\t\t\t\tg_QuitRequested = true;
 \t\t\t}
 
 \t\t\tUpdateTextFocus();
@@ -124,10 +124,10 @@ NEW5 = '''\t} else while (true) {
 \t\t\tg_saveAndQuit = 0;
 \t\t\tif (PSP_IsInited() && (GetUIState() == UISTATE_INGAME || GetUIState() == UISTATE_PAUSEMENU)) {
 \t\t\t\tSaveState::SaveSlot(SaveState::GetGamePrefix(g_paramSFO), g_Config.iCurrentStateSlot,
-\t\t\t\t\t[](auto, auto) { g_QuitRequested = true; });
-\t\t\t} else {
-\t\t\t\tg_QuitRequested = true;
+\t\t\t\t\t[](auto, auto) {});
+\t\t\t\tSaveState::Process();
 \t\t\t}
+\t\t\tg_QuitRequested = true;
 \t\t}
 \t\tif (g_QuitRequested || g_RestartRequested)'''
 
