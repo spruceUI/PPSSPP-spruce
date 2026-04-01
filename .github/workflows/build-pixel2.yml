@@ -78,6 +78,7 @@ jobs:
                                   libglu1-mesa-dev \
                                   freeglut3-dev \
                                   libzip-dev \
+                                  libfreetype6-dev \
                                   libfontconfig1-dev \
                                   libglew-dev
           sudo apt autoremove -y
