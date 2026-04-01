@@ -17,7 +17,7 @@ OLD = '''\tcase SDL_CONTROLLER_BUTTON_GUIDE:
 \t\treturn NKCODE_BACK; // pause menu'''
 
 NEW = '''\tcase SDL_CONTROLLER_BUTTON_GUIDE:
-\t\treturn NKCODE_UNKNOWN; // spruceOS: home button handled by OS watchdog'''
+\t\treturn NKCODE_BUTTON_16; // spruceOS: home button handled by OS watchdog, use dead-end keycode to absorb the input'''
 
 if OLD not in src:
     print(f'ERROR: cannot find GUIDE button mapping in {PATH}', file=sys.stderr)
