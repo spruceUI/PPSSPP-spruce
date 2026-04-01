@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -34,43 +34,71 @@ jobs:
               --notes "PPSSPP binaries built from ${{ github.ref_name }}" \
             || true
 
-      - name: Set up QEMU for arm64 emulation
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
+      # - name: Restore ccache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ccache-pixel2
+      #     key: ccache-pixel2-ppsspp-${{ github.sha }}
+      #     restore-keys: ccache-pixel2-ppsspp-
 
-      - name: Download Pixel2 Docker image from RA repo
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential \
+                                  ccache \
+                                  libdrm-dev \
+                                  python3 \
+                                  python3-pip \
+                                  python3-setuptools \
+                                  python3-wheel \
+                                  premake4 \
+                                  autoconf \
+                                  libevdev-dev \
+                                  ffmpeg \
+                                  libpipewire-0.3-dev \
+                                  libavcodec-dev \
+                                  libavformat-dev \
+                                  libavdevice-dev \
+                                  libsnappy-dev \
+                                  liblzma-dev \
+                                  pkg-config \
+                                  zlib1g-dev \
+                                  libpng-dev \
+                                  libsdl2-dev \
+                                  clang \
+                                  cmake \
+                                  cmake-data \
+                                  libgbm-dev \
+                                  libsdl2-ttf-2.0-0 \
+                                  libsdl2-ttf-dev \
+                                  wayland-protocols \
+                                  libglvnd-dev \
+                                  libglu1-mesa-dev \
+                                  freeglut3-dev \
+                                  libzip-dev \
+                                  libfontconfig1-dev \
+                                  libglew-dev
+          sudo apt autoremove -y
+          sudo apt clean
+
+      - name: Download libmali
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download toolchains \
-            --repo spruceUI/RA \
-            --pattern "pixel2-docker.tar.gz" \
+          gh release download v1.9-1-4b399ed \
+            --repo ginkage/libmali-rockchip \
+            --pattern "libmali-bifrost-g31-g13p0-wayland-gbm_1.9-1_arm64.deb" \
             --dir .
 
-      - name: Load Docker image
-        run: gunzip -c pixel2-docker.tar.gz | docker load
-
-      - name: Restore ccache
-        uses: actions/cache@v4
-        with:
-          path: ccache-pixel2
-          key: ccache-pixel2-ppsspp-${{ github.sha }}
-          restore-keys: ccache-pixel2-ppsspp-
+      - name: Install libmali
+        run: |
+          sudo apt install -y ./libmali-bifrost-g31-g13p0-wayland-gbm_1.9-1_arm64.deb
+          rm libmali-bifrost-g31-g13p0-wayland-gbm_1.9-1_arm64.deb
 
       - name: Build PPSSPP
         run: |
-          mkdir -p output ccache-pixel2
           chmod +x build-pixel2.sh
-          docker run --rm --platform linux/arm64 \
-            -e PPSSPP_VERSION=${{ github.event.inputs.ppsspp_version || 'd357e6a32934800d3d80b49f910a603e1b069751' }} \
-            -e CCACHE_DIR=/ccache \
-            -v ${{ github.workspace }}/output:/output \
-            -v ${{ github.workspace }}/ccache-pixel2:/ccache \
-            -v ${{ github.workspace }}/build-pixel2.sh:/build-pixel2.sh \
-            -v ${{ github.workspace }}/patches:/patches \
-            --entrypoint /build-pixel2.sh \
-            ra-builder-pixel2
+          ./build-pixel2.sh
 
       - name: Upload binary
         env:
