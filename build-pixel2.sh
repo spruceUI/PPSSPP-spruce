@@ -33,8 +33,8 @@ done
 
 mkdir -p build && cd build
 
-# Set up ccache
-export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
+# # Set up ccache
+# export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 
 # Configure — Hario's exact flags for Pixel2
 cmake .. \
@@ -67,10 +67,6 @@ make -j$(nproc) PPSSPPSDL
 strip -s PPSSPPSDL
 
 # Output
-mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_Pixel2"
+mv PPSSPPSDL PPSSPPSDL_Pixel2
 
-# Copy assets (required at runtime)
-cp -r ../assets "$OUTPUT_DIR/assets"
-
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_Pixel2 ==="
+echo "=== Build complete: PPSSPPSDL_Pixel2 ==="
