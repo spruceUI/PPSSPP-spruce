@@ -104,4 +104,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "beta-${{ github.ref_name }}" output/PPSSPPSDL_Pixel2 --clobber
+          gh release upload "beta-${{ github.ref_name }}" ppsspp/build/PPSSPPSDL_Pixel2 --clobber
