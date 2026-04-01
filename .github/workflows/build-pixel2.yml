@@ -78,6 +78,7 @@ jobs:
                                   libglvnd-dev \
                                   libglu1-mesa-dev \
                                   freeglut3-dev \
+                                  libxcb-dri2-0 \
                                   libzip-dev \
                                   libfreetype6-dev \
                                   libfontconfig1-dev \
