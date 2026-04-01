@@ -57,6 +57,7 @@ jobs:
                                   autoconf \
                                   libevdev-dev \
                                   ffmpeg \
+                                  libcurl4-openssl-dev \
                                   libpipewire-0.3-dev \
                                   libavcodec-dev \
                                   libavformat-dev \
