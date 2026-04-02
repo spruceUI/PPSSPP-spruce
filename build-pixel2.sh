@@ -33,19 +33,25 @@ done
 
 mkdir -p build && cd build
 
-# Set up ccache
-export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
+# # Set up ccache
+# export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 
 # Configure — Hario's exact flags for Pixel2
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=/usr/bin/clang \
     -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+    -DCMAKE_AR=/usr/bin/llvm-ar-18 \
+    -DCMAKE_RANLIB=/usr/bin/llvm-ranlib-18 \
+    -DCMAKE_NM=/usr/bin/llvm-nm-18 \
+    -DCMAKE_LINKER_TYPE=LLD \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -flto" \
     -DCMAKE_CXX_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -fpermissive -flto" \
-    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -flto=auto" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
@@ -67,10 +73,6 @@ make -j$(nproc) PPSSPPSDL
 strip -s PPSSPPSDL
 
 # Output
-mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_Pixel2"
+mv PPSSPPSDL PPSSPPSDL_Pixel2
 
-# Copy assets (required at runtime)
-cp -r ../assets "$OUTPUT_DIR/assets"
-
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_Pixel2 ==="
+echo "=== Build complete: PPSSPPSDL_Pixel2 ==="
