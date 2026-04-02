@@ -45,7 +45,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -flto=thin" \
     -DCMAKE_CXX_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -fpermissive -flto=thin" \
-    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -flto=thin" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto=thin" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \

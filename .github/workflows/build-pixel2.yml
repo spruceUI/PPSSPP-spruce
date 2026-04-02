@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       ppsspp_version:
-        description: 'PPSSPP commit or tag'
-        default: 'd357e6a32934800d3d80b49f910a603e1b069751'
+        description: "PPSSPP commit or tag"
+        default: "d357e6a32934800d3d80b49f910a603e1b069751"
   workflow_call:
     inputs:
       ppsspp_version:
         type: string
-        default: 'd357e6a32934800d3d80b49f910a603e1b069751'
+        default: "d357e6a32934800d3d80b49f910a603e1b069751"
 
 permissions:
   contents: write
@@ -69,6 +69,7 @@ jobs:
                                   libpng-dev \
                                   libsdl2-dev \
                                   clang \
+                                  lld \
                                   cmake \
                                   cmake-data \
                                   libgbm-dev \
