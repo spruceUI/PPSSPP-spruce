@@ -41,6 +41,10 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=/usr/bin/clang \
     -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+    -DCMAKE_AR=/usr/bin/llvm-ar-18 \
+    -DCMAKE_RANLIB=/usr/bin/llvm-ranlib-18 \
+    -DCMAKE_NM=/usr/bin/llvm-nm-18 \
+    -DCMAKE_LINKER_TYPE=LLD \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_C_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -flto=thin" \
