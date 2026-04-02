@@ -47,11 +47,11 @@ cmake .. \
     -DCMAKE_LINKER_TYPE=LLD \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -flto=thin" \
-    -DCMAKE_CXX_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -fpermissive -flto=thin" \
-    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto=thin" \
-    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto=thin" \
-    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto=thin" \
+    -DCMAKE_C_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -flto" \
+    -DCMAKE_CXX_FLAGS="-Ofast -ffunction-sections -fdata-sections -fno-tree-slp-vectorize -D_NDEBUG -mcpu=cortex-a35 -ftree-vectorize -funsafe-math-optimizations -fomit-frame-pointer -fpermissive -flto" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto" \
+    -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto" \
+    -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld -Wl,--gc-sections -flto" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
