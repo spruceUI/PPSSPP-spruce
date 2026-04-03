@@ -20,13 +20,13 @@ fi
 
 # Apply common patches
 echo "=== Applying patches ==="
-for patch in /patches/common/*.py; do
+for patch in ../patches/common/*.py; do
     [ -f "$patch" ] || continue
     python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
 # Apply pixel2-specific patches
-for patch in /patches/pixel2/*.py; do
+for patch in ../patches/pixel2/*.py; do
     [ -f "$patch" ] || continue
     python3 "$patch" && echo "Applied: $(basename $patch)"
 done
