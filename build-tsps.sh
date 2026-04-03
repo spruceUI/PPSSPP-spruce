@@ -15,10 +15,14 @@ fi
 
 cd ppsspp
 
-# Apply common patches
+# Apply common patches (skip vulkan probe patch — TSPS has Vulkan enabled)
 echo "=== Applying patches ==="
 for patch in /patches/common/*.py; do
-    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+    [ -f "$patch" ] || continue
+    case "$(basename $patch)" in
+        skip-vulkan-probe.py) echo "Skipping: $(basename $patch) (TSPS has Vulkan)" ;;
+        *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
+    esac
 done
 
 # Apply TSPS-specific patches
