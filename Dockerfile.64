@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Ubuntu 20.04 (focal) provides glibc 2.31 — oldest among 64-bit SpruceOS devices
+# Ubuntu 20.04 (focal) provides glibc 2.31 — oldest among 64-bit SpruceOS devices is glibc 2.33
 RUN dpkg --add-architecture arm64 && \
     sed -i 's/^deb http/deb [arch=amd64] http/g' /etc/apt/sources.list && \
     echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse" >> /etc/apt/sources.list && \
@@ -10,8 +10,8 @@ RUN dpkg --add-architecture arm64 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
-    gcc-aarch64-linux-gnu \
-    g++-aarch64-linux-gnu \
+    gcc-10-aarch64-linux-gnu \
+    g++-10-aarch64-linux-gnu \
     pkg-config \
     git \
     ca-certificates \
@@ -28,6 +28,22 @@ RUN dpkg --add-architecture arm64 && \
     libglew-dev:arm64 \
     libzip-dev:arm64 \
     && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install \
+    /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc \
+    /usr/bin/aarch64-linux-gnu-gcc-10 10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ \
+    /usr/bin/aarch64-linux-gnu-g++-10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-gcc-ar aarch64-linux-gnu-gcc-ar \
+    /usr/bin/aarch64-linux-gnu-gcc-ar-10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-gcc-nm aarch64-linux-gnu-gcc-nm \
+    /usr/bin/aarch64-linux-gnu-gcc-nm-10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-gcc-ranlib aarch64-linux-gnu-gcc-ranlib \
+    /usr/bin/aarch64-linux-gnu-gcc-ranlib-10
 
 # Create CMake toolchain file for aarch64 cross-compilation
 RUN printf '\

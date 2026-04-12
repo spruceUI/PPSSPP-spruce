@@ -2,12 +2,28 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Ubuntu's cross-compiler (GCC 9.4, full C++17) + build tools
+# Ubuntu's cross-compiler (GCC 10.3, full C++20) + build tools
 # Linaro GCC 7.5 is too old for PPSSPP v1.20.3 (needs CTAD support)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake git python3 ccache ca-certificates pkg-config \
-    gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+    gcc-10-aarch64-linux-gnu g++-10-aarch64-linux-gnu \
     && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install \
+    /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc \
+    /usr/bin/aarch64-linux-gnu-gcc-10 10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ \
+    /usr/bin/aarch64-linux-gnu-g++-10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-gcc-ar aarch64-linux-gnu-gcc-ar \
+    /usr/bin/aarch64-linux-gnu-gcc-ar-10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-gcc-nm aarch64-linux-gnu-gcc-nm \
+    /usr/bin/aarch64-linux-gnu-gcc-nm-10 \
+    --slave \
+    /usr/bin/aarch64-linux-gnu-gcc-ranlib aarch64-linux-gnu-gcc-ranlib \
+    /usr/bin/aarch64-linux-gnu-gcc-ranlib-10
 
 # Extract Linaro sysroot (glibc 2.25 base with proper /lib layout)
 # We only use the sysroot, not the compiler
