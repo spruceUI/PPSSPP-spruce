@@ -48,11 +48,11 @@ cmake .. \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
-    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
+    -DCMAKE_C_FLAGS="-O2 -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
+    -DCMAKE_CXX_FLAGS="-O2 -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -static-libstdc++ -flto=auto" \
     -DUSING_GLES2=ON \
-    -DUSING_EGL=OFF \
+    -DUSING_EGL=ON \
     -DUSING_FBDEV=ON \
     -DVULKAN=ON \
     -DUSE_VULKAN_DISPLAY_KHR=ON \
@@ -67,7 +67,10 @@ cmake .. \
     -DUNITTEST=OFF \
     -DCMAKE_DISABLE_FIND_PACKAGE_SDL2_ttf=ON \
     -DCMAKE_DISABLE_FIND_PACKAGE_Fontconfig=ON \
-    -DCMAKE_DISABLE_FIND_PACKAGE_X11=ON
+    -DCMAKE_DISABLE_FIND_PACKAGE_X11=ON \
+    -DARM=ON \
+    -DARM64=ON \
+    -DMOBILE_DEVICE=OFF
 
 # Fix cross-compile: -isystem paths get sysroot-prepended by GCC, breaking includes
 find . \( -name 'flags.make' -o -name 'build.ninja' \) -exec sed -i 's|-isystem |-I|g' {} +
