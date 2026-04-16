@@ -21,6 +21,7 @@ for patch in /patches/common/*.py; do
     [ -f "$patch" ] || continue
     case "$(basename $patch)" in
         fullscreen.py) echo "Skipping: $(basename $patch) (PVR uses FULLSCREEN_DESKTOP)" ;;
+        skip-vulkan-probe.py) echo "Skipping: $(basename $patch) (PVR has Vulkan)" ;;
         *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
     esac
 done
@@ -40,7 +41,7 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/usr/bin:${PATH}"
 
-# Configure for PowerVR: SDL2 + GLES2, link PowerVR userspace libs directly
+# Configure for PowerVR: SDL2 + GLES2 + Vulkan, link PowerVR userspace libs directly
 # SDL2 dynamically linked from /usr/trimui/lib
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -53,7 +54,8 @@ cmake .. \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
-    -DVULKAN=OFF \
+    -DVULKAN=ON \
+    -DUSE_VULKAN_DISPLAY_KHR=ON \
     -DUSING_X11_VULKAN=OFF \
     -DUSE_WAYLAND_WSI=OFF \
     -DBUILD_SHARED_LIBS=OFF \
