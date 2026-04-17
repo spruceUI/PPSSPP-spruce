@@ -20,14 +20,18 @@ INCLUDE_NEW = '''#include <signal.h>
 static void crash_handler(int sig, siginfo_t *info, void *ucontext) {
 \tucontext_t *uc = (ucontext_t *)ucontext;
 \tvoid *crash_pc = (void *)uc->uc_mcontext.pc;
+\tvoid *crash_lr = (void *)uc->uc_mcontext.regs[30];
 \tfprintf(stderr, "\\n=== CRASH: signal %d ===\\n", sig);
 \tfprintf(stderr, "Fault address: %p\\n", info->si_addr);
 \tfprintf(stderr, "Crash PC: %p\\n", crash_pc);
-\tfprintf(stderr, "--- backtrace ---\\n");
+\tfprintf(stderr, "Caller LR: %p\\n", crash_lr);
+\tfprintf(stderr, "SP: %p  FP: %p\\n", (void *)uc->uc_mcontext.sp, (void *)uc->uc_mcontext.regs[29]);
+\tfprintf(stderr, "--- backtrace from LR ---\\n");
 \tvoid *frames[64];
 \tint n = backtrace(frames, 64);
-\t// Replace the signal handler frame with the actual crash PC
-\tif (n > 0) frames[0] = crash_pc;
+\t// Replace top frames with actual crash context
+\tif (n > 0) frames[0] = crash_lr;
+\tif (n > 1) frames[1] = crash_pc;
 \tbacktrace_symbols_fd(frames, n, STDERR_FILENO);
 \tfprintf(stderr, "=== END BACKTRACE ===\\n");
 \t_exit(1);
