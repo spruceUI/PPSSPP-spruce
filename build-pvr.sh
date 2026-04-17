@@ -44,13 +44,13 @@ export PATH="/usr/bin:${PATH}"
 # Configure for PowerVR: SDL2 + GLES2 + Vulkan, link PowerVR userspace libs directly
 # SDL2 dynamically linked from /usr/trimui/lib
 cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/pvr-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-O2 -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
-    -DCMAKE_CXX_FLAGS="-O2 -mcpu=cortex-a53 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
-    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -static-libstdc++ -flto=auto" \
+    -DCMAKE_C_FLAGS="-O1 -g -mcpu=cortex-a53 -fno-omit-frame-pointer -Wno-error -funwind-tables -fasynchronous-unwind-tables" \
+    -DCMAKE_CXX_FLAGS="-O1 -g -mcpu=cortex-a53 -fno-omit-frame-pointer -Wno-error -funwind-tables -fasynchronous-unwind-tables" \
+    -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -static-libstdc++ -rdynamic" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
     -DUSING_FBDEV=ON \
@@ -81,7 +81,10 @@ make -j$(nproc) PPSSPPSDL
 # Output
 mkdir -p "$OUTPUT_DIR"
 cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
+# Debug build: keep symbols for stack traces, save separate debug info
+aarch64-linux-gnu-objcopy --only-keep-debug "$OUTPUT_DIR/PPSSPPSDL_TrimUI" "$OUTPUT_DIR/PPSSPPSDL_TrimUI.debug"
 aarch64-linux-gnu-strip -s "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
+aarch64-linux-gnu-objcopy --add-gnu-debuglink="$OUTPUT_DIR/PPSSPPSDL_TrimUI.debug" "$OUTPUT_DIR/PPSSPPSDL_TrimUI"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
