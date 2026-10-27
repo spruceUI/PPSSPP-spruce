@@ -42,5 +42,15 @@ jobs:
     with:
       ppsspp_version: ${{ inputs.ppsspp_version }}
 
+  build-darkmoss3566:
+    uses: ./.github/workflows/build-darkmoss3566.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
+
+  build-darkmoss3326:
+    uses: ./.github/workflows/build-darkmoss3326.yml
+    with:
+      ppsspp_version: ${{ inputs.ppsspp_version }}
+
   build-pixel2:
     uses: ./.github/workflows/build-pixel2.yml

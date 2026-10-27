@@ -8,7 +8,7 @@ SDLMain.cpp only adds a fullscreen flag inside the USING_FBDEV branch:
     #else
         mode |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
 
-The RGB30 build turns USING_FBDEV off - it is what made PPSSPP render into
+The dArkMoss builds turn USING_FBDEV off - it is what made PPSSPP render into
 /dev/fb0 instead of the KMS plane - so without this it takes the desktop
 branch and asks for a resizable window. There is no window manager on KMSDRM,
 and the block just below keys the render resolution off the fullscreen flag:
@@ -26,7 +26,7 @@ import sys
 
 PATH = "SDL/SDLMain.cpp"
 OLD = "mode |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;"
-NEW = "mode |= SDL_WINDOW_FULLSCREEN;  // RGB30: KMSDRM, no window manager"
+NEW = "mode |= SDL_WINDOW_FULLSCREEN;  // dArkMoss: KMSDRM, no window manager"
 
 with open(PATH) as f:
     src = f.read()

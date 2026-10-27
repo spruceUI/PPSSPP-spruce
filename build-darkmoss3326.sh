@@ -4,7 +4,7 @@ set -e
 PPSSPP_VERSION="${PPSSPP_VERSION:-v1.20.3}"
 OUTPUT_DIR="${OUTPUT_DIR:-/output}"
 
-echo "=== Building PPSSPP ${PPSSPP_VERSION} for Powkiddy RGB30 (RK3566 / Mali G52, dArkMoss KMSDRM) ==="
+echo "=== Building PPSSPP ${PPSSPP_VERSION} for dArkMoss RK3326 (Cortex-A35 / Mali G31, KMSDRM) ==="
 
 # Clone PPSSPP with submodules
 if [ ! -d "ppsspp" ]; then
@@ -21,8 +21,8 @@ for patch in /patches/common/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
-# Apply flip-specific patches
-for patch in /patches/rgb30/*.py; do
+# Apply dArkMoss patches
+for patch in /patches/darkmoss/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
@@ -32,26 +32,15 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/opt/flip/bin:/opt/flip/aarch64-flip-linux-gnu/bin:${PATH}"
 
-# Configure for RGB30: SDL2 + GLES2 on KMSDRM, and crucially NOT fbdev.
-#
-# USING_FBDEV makes EGL_Open() pass a null native display and window, which on
-# a Mali blob resolves to /dev/fb0. On dArkMoss that is a dead emulated shim -
-# it reads back all zeros and nothing scans it out. Measured on hardware: with
-# the Flip build, PPSSPP held DRM master and presented a 720x1440 framebuffer
-# (exactly fb0's virtual_size) that was entirely black, while the game booted
-# and emulated normally underneath.
-#
-# USING_EGL=OFF hands the context and the buffer swap back to SDL
-# (SDL_GL_SwapWindow), so PPSSPP draws into the GBM surface SDL already owns.
-# Still GLES2 - the ES profile request in SDLGLGraphicsContext.cpp is what
-# USING_GLES2 controls, and that part was always correct.
+# Same configuration as build-darkmoss3566.sh (see its notes on USING_EGL/USING_FBDEV);
+# only the CPU target differs: the A35 is ARMv8.0, A55 code dies with SIGILL.
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/flip-toolchain.cmake \
     -DCMAKE_C_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a55 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
-    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a55 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
+    -DCMAKE_C_FLAGS="-Ofast -mcpu=cortex-a35 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
+    -DCMAKE_CXX_FLAGS="-Ofast -mcpu=cortex-a35 -ffunction-sections -fdata-sections -fomit-frame-pointer -flto=auto -Wno-error" \
     -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections -flto=auto" \
     -DUSING_GLES2=ON \
     -DUSING_EGL=OFF \
@@ -78,10 +67,10 @@ make -j$(nproc) PPSSPPSDL
 
 # Output
 mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_RGB30"
-/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_RGB30"
+cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_dArkMoss3326"
+/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_dArkMoss3326"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
 
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_RGB30 ==="
+echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_dArkMoss3326 ==="
