@@ -4,7 +4,7 @@ set -e
 PPSSPP_VERSION="${PPSSPP_VERSION:-v1.20.3}"
 OUTPUT_DIR="${OUTPUT_DIR:-/output}"
 
-echo "=== Building PPSSPP ${PPSSPP_VERSION} for Powkiddy RGB30 (RK3566 / Mali G52, dArkMoss KMSDRM) ==="
+echo "=== Building PPSSPP ${PPSSPP_VERSION} for dArkMoss RK3566 (Cortex-A55 / Mali G52, KMSDRM) ==="
 
 # Clone PPSSPP with submodules
 if [ ! -d "ppsspp" ]; then
@@ -21,8 +21,8 @@ for patch in /patches/common/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
-# Apply flip-specific patches
-for patch in /patches/rgb30/*.py; do
+# Apply dArkMoss patches
+for patch in /patches/darkmoss/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
@@ -32,7 +32,7 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/opt/flip/bin:/opt/flip/aarch64-flip-linux-gnu/bin:${PATH}"
 
-# Configure for RGB30: SDL2 + GLES2 on KMSDRM, and crucially NOT fbdev.
+# Configure for dArkMoss: SDL2 + GLES2 on KMSDRM, and crucially NOT fbdev.
 #
 # USING_FBDEV makes EGL_Open() pass a null native display and window, which on
 # a Mali blob resolves to /dev/fb0. On dArkMoss that is a dead emulated shim -
@@ -78,10 +78,10 @@ make -j$(nproc) PPSSPPSDL
 
 # Output
 mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_RGB30"
-/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_RGB30"
+cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_dArkMoss3566"
+/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_dArkMoss3566"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
 
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_RGB30 ==="
+echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_dArkMoss3566 ==="

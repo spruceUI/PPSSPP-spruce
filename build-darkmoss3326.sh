@@ -21,8 +21,8 @@ for patch in /patches/common/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
-# Same KMSDRM patches as the RGB30
-for patch in /patches/rgb30/*.py; do
+# Apply dArkMoss patches
+for patch in /patches/darkmoss/*.py; do
     [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
 done
 
@@ -32,7 +32,7 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/opt/flip/bin:/opt/flip/aarch64-flip-linux-gnu/bin:${PATH}"
 
-# Same configuration as build-rgb30.sh (see its notes on USING_EGL/USING_FBDEV);
+# Same configuration as build-darkmoss3566.sh (see its notes on USING_EGL/USING_FBDEV);
 # only the CPU target differs: the A35 is ARMv8.0, A55 code dies with SIGILL.
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -67,10 +67,10 @@ make -j$(nproc) PPSSPPSDL
 
 # Output
 mkdir -p "$OUTPUT_DIR"
-cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_RK3326"
-/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_RK3326"
+cp PPSSPPSDL "$OUTPUT_DIR/PPSSPPSDL_dArkMoss3326"
+/opt/flip/aarch64-flip-linux-gnu/bin/strip -s "$OUTPUT_DIR/PPSSPPSDL_dArkMoss3326"
 
 # Copy assets (required at runtime)
 cp -r ../assets "$OUTPUT_DIR/assets"
 
-echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_RK3326 ==="
+echo "=== Build complete: ${OUTPUT_DIR}/PPSSPPSDL_dArkMoss3326 ==="

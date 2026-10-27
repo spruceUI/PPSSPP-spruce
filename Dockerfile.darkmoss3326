@@ -40,9 +40,9 @@ set(ENV{PKG_CONFIG_LIBDIR} "%s/usr/lib/pkgconfig:%s/usr/share/pkgconfig")\n\
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)\n\
 ' "$SYSROOT" "$SYSROOT" "$SYSROOT" "$SYSROOT" "$SYSROOT" > /tmp/flip-toolchain.cmake
 
-COPY build-rgb30.sh /build-rgb30.sh
-RUN chmod +x /build-rgb30.sh
+COPY build-darkmoss3326.sh /build-darkmoss3326.sh
+RUN chmod +x /build-darkmoss3326.sh
 COPY patches/ /patches/
 
 WORKDIR /build
-ENTRYPOINT ["/build-rgb30.sh"]
+ENTRYPOINT ["/build-darkmoss3326.sh"]

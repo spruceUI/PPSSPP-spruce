@@ -42,13 +42,13 @@ jobs:
     with:
       ppsspp_version: ${{ inputs.ppsspp_version }}
 
-  build-rgb30:
-    uses: ./.github/workflows/build-rgb30.yml
+  build-darkmoss3566:
+    uses: ./.github/workflows/build-darkmoss3566.yml
     with:
       ppsspp_version: ${{ inputs.ppsspp_version }}
 
-  build-rk3326:
-    uses: ./.github/workflows/build-rk3326.yml
+  build-darkmoss3326:
+    uses: ./.github/workflows/build-darkmoss3326.yml
     with:
       ppsspp_version: ${{ inputs.ppsspp_version }}
 

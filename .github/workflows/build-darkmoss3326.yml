@@ -1,4 +1,4 @@
-name: Build PPSSPPSDL_RGB30
+name: Build PPSSPPSDL_dArkMoss3326
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE: ghcr.io/spruceui/ppsspp-builder-rgb30
+  IMAGE: ghcr.io/spruceui/ppsspp-builder-darkmoss3326
 
 jobs:
   build:
@@ -52,7 +52,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.rgb30
+          file: Dockerfile.darkmoss3326
           push: true
           tags: ${{ env.IMAGE }}:latest
           cache-from: type=registry,ref=${{ env.IMAGE }}:cache
@@ -62,10 +62,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ccache
-          key: ccache-rgb30-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-${{ github.sha }}
+          key: ccache-darkmoss3326-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-${{ github.sha }}
           restore-keys: |
-            ccache-rgb30-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-
-            ccache-rgb30-
+            ccache-darkmoss3326-${{ github.event.inputs.ppsspp_version || 'v1.20.3' }}-
+            ccache-darkmoss3326-
 
       - name: Build PPSSPP
         run: |
@@ -80,4 +80,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "beta-${{ github.ref_name }}" output/PPSSPPSDL_RGB30 --clobber
+          gh release upload "beta-${{ github.ref_name }}" output/PPSSPPSDL_dArkMoss3326 --clobber
