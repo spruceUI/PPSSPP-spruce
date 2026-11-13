@@ -12,7 +12,9 @@ echo "=== Building PPSSPP ${PPSSPP_VERSION} for Anbernic H700 (Allwinner H700 / 
 # GLES2/EGL and SDL2 packages are linked by soname, and at runtime on the device
 # resolve to the H700 mali blob and the mali-fbdev SDL2 spruce ships. The build
 # adds Cortex-A53 tuning and the handheld cmake flags MustardOS uses for the same
-# SoC (ARM_NO_VULKAN / MOBILE_DEVICE / ATLAS_TOOL=OFF).
+# SoC (MOBILE_DEVICE / ATLAS_TOOL=OFF). Unlike muOS it builds Vulkan: the Mali
+# blob has none, but BaseOS-spruce ships PanVK with a VK_KHR_display on fbdev.
+# PPSSPP probes Vulkan at run time and stays on GLES where there is none.
 #
 # Reference: MustardOS/tool/build_ppsspp.sh (h700 case). muOS builds against a
 # crosstool-NG sysroot that carries the mali blob and force-links it plus
@@ -32,8 +34,16 @@ cd ppsspp
 # Apply common patches (includes the gameswitcher / menu-button integration)
 echo "=== Applying patches ==="
 for patch in /patches/common/*.py; do
-    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+    [ -f "$patch" ] || continue
+    case "$(basename $patch)" in
+        skip-vulkan-probe.py) echo "Skipping: $(basename $patch) (Vulkan build)" ;;
+        *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
+    esac
 done
+
+# The device SDL2 is mali-fbdev, an SDL subsystem PPSSPP's Vulkan code does not
+# know: present through VK_KHR_display, as on the PowerVR boards.
+python3 /patches/pvr/vulkan-display-fallback.py && echo "Applied: vulkan-display-fallback.py"
 
 # Apply h700-specific patches
 for patch in /patches/h700/*.py; do
@@ -45,7 +55,7 @@ mkdir -p build && cd build
 # Cross-compilation environment
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 
-# Configure for H700: SDL2 + GLES2 + EGL + fbdev, no Vulkan/X11/Wayland.
+# Configure for H700: SDL2 + GLES2 + EGL + fbdev, Vulkan on VK_KHR_display, no X11/Wayland.
 # Cortex-A53 tuning and the handheld flags match MustardOS's proven h700 build.
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -58,8 +68,8 @@ cmake .. \
     -DUSING_GLES2=ON \
     -DUSING_EGL=ON \
     -DUSING_FBDEV=ON \
-    -DVULKAN=OFF \
-    -DARM_NO_VULKAN=ON \
+    -DVULKAN=ON \
+    -DUSE_VULKAN_DISPLAY_KHR=ON \
     -DUSING_X11_VULKAN=OFF \
     -DUSE_WAYLAND_WSI=OFF \
     -DMOBILE_DEVICE=ON \
