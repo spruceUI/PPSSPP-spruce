@@ -18,8 +18,16 @@ cd ppsspp
 # Apply common patches
 echo "=== Applying patches ==="
 for patch in /patches/common/*.py; do
-    [ -f "$patch" ] && python3 "$patch" && echo "Applied: $(basename $patch)"
+    [ -f "$patch" ] || continue
+    case "$(basename $patch)" in
+        skip-vulkan-probe.py) echo "Skipping: $(basename $patch) (Vulkan build)" ;;
+        *) python3 "$patch" && echo "Applied: $(basename $patch)" ;;
+    esac
 done
+
+# Vulkan presents through VK_KHR_display; this covers an SDL that reports an
+# unknown window system instead of KMSDRM.
+python3 /patches/pvr/vulkan-display-fallback.py && echo "Applied: vulkan-display-fallback.py"
 
 # Apply flip-specific patches
 for patch in /patches/flip/*.py; do
@@ -32,7 +40,9 @@ mkdir -p build && cd build
 export CCACHE_DIR="${CCACHE_DIR:-/ccache}"
 export PATH="/opt/flip/bin:/opt/flip/aarch64-flip-linux-gnu/bin:${PATH}"
 
-# Configure for Flip: SDL2 + GLES2, fbdev, no X11/Wayland/Vulkan
+# Configure for Flip: SDL2 + GLES2, fbdev, no X11/Wayland. Vulkan on VK_KHR_display:
+# the firmware has no Vulkan driver, spruce ships one (device_vulkan_env); PPSSPP
+# probes at run time and stays on GLES without it.
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/tmp/flip-toolchain.cmake \
@@ -44,7 +54,8 @@ cmake .. \
     -DUSING_GLES2=ON \
     -DUSING_EGL=ON \
     -DUSING_FBDEV=ON \
-    -DVULKAN=OFF \
+    -DVULKAN=ON \
+    -DUSE_VULKAN_DISPLAY_KHR=ON \
     -DUSING_X11_VULKAN=OFF \
     -DUSE_WAYLAND_WSI=OFF \
     -DBUILD_SHARED_LIBS=OFF \
